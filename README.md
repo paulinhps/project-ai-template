@@ -25,27 +25,27 @@ npm install -g @fission-ai/openspec@latest
 
 Use this sequence when creating a new repository that should adopt the shared AI structure.
 
-1. Create or open the empty project directory.
+The project initialization decision is: first place the shared `.ai` content in the project root, then run the configuration skill. The setup skill/script owns root repository initialization, root files and directories, `.ai` submodule registration, OpenSpec initialization, and the initial root commit.
+
+1. Create or open the empty project directory. Do not run `git init` in the root manually.
 
 ```powershell
 mkdir my-project
 cd my-project
-git init --initial-branch=main
 ```
 
-2. Add the `.ai` context.
+2. Clone or download the shared `.ai` context into the project root.
 
-Use a shared remote when one exists:
+Use the shared AI repository when one exists:
 
 ```powershell
-git submodule add <AI_REPOSITORY_URL> .ai
+git clone <AI_REPOSITORY_URL> .ai
 ```
 
-For a local bootstrap, copy or create `.ai` first, then initialize it as its own repository:
+For a local bootstrap, copy the prepared `.ai` directory into the project root:
 
 ```powershell
-mkdir .ai
-git -C .ai init --initial-branch=main
+Copy-Item -Recurse <AI_CONTEXT_SOURCE> .ai
 ```
 
 3. Run the setup skill script from the project root.
@@ -54,13 +54,16 @@ git -C .ai init --initial-branch=main
 .\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1
 ```
 
-When `.ai` should be added from a real remote repository during setup, pass the repository URL:
+The script is responsible for these root initialization tasks:
 
-```powershell
-.\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1 -AiRepositoryUrl "<AI_REPOSITORY_URL>"
-```
+- Initialize the root Git repository when it does not exist.
+- Create root directories and seed files such as `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
+- Create `.codex`, `.claude`, and `.agents` links to `.ai`.
+- Initialize OpenSpec when `openspec/` is missing.
+- Register `.ai` as a submodule/gitlink of the root repository.
+- Create the initial root commit when the root repository has no commits.
 
-4. Initialize OpenSpec if the setup script did not already create `openspec/`.
+4. Initialize OpenSpec manually only if the setup script could not run it.
 
 ```powershell
 openspec init --tools "codex,claude" .
@@ -83,15 +86,13 @@ openspec/
 sources/
 ```
 
-6. Review and commit the initialized project.
+6. Review the initialized project.
 
 ```powershell
 git status
-git add AGENTS.md .gitignore .gitmodules .ai docs openspec sources
-git commit -m "chore: initialize AI project environment"
 ```
 
-Follow `.ai/rules/conventional-commits.md` for every commit in the root repository and in the `.ai` repository.
+The setup script creates the initial root commit automatically when the root repository has no commits. Follow `.ai/rules/conventional-commits.md` for every later commit in the root repository and in the `.ai` repository.
 
 ## How to Use the `.ai` Structure
 

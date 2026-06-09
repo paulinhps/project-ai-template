@@ -12,14 +12,25 @@ Use this skill to prepare a repository for the shared AI workflow used by this p
 1. Inspect the root before changing anything:
    - Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `openspec/`, `docs/`, `sources/`, and Git status.
    - Treat `.ai` as canonical. Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
-2. Prefer running `scripts/setup-ai-environment.ps1` from the project root.
-3. If the script cannot be used, follow its behavior manually and keep the same safety checks.
-4. Use `assets/seeds/AGENTS.md` and `assets/seeds/.gitignore` as the source templates for new projects.
-5. After changing any shared skill, rule, command, agent, template, MCP asset, setup convention, or seed file, create the next immutable prompt registry file under `.ai/prompts/registry`.
+2. For new projects, ensure the `.ai` context has already been cloned or downloaded into the project root before root initialization.
+3. Prefer running `scripts/setup-ai-environment.ps1` from the project root.
+   - The script owns root Git initialization, root directory and seed file creation, root tool links, OpenSpec initialization, `.ai` submodule/gitlink registration, and the initial root commit.
+   - Do not tell the user to run `git init`, `git submodule add`, or the initial root commit manually before this script in the standard flow.
+4. If the script cannot be used, follow its behavior manually and keep the same safety checks.
+5. Use `assets/seeds/AGENTS.md` and `assets/seeds/.gitignore` as the source templates for new projects.
+6. After changing any shared skill, rule, command, agent, template, MCP asset, setup convention, or seed file, create the next immutable prompt registry file under `.ai/prompts/registry`.
 
 ## Quick Start
 
-From the project root:
+From a new empty project root, place the shared `.ai` context first:
+
+```powershell
+git clone <AI_REPOSITORY_URL> .ai
+```
+
+If the shared context is distributed as a download instead of a Git repository, extract or copy it into `.ai`.
+
+Then run the setup script from the project root:
 
 ```powershell
 .\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1
@@ -31,7 +42,16 @@ The default Git branch for newly initialized repositories is `main`. Override it
 .\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1 -DefaultBranch "main"
 ```
 
-When `.ai` must be added as a submodule from a real remote repository:
+The setup script handles the rest of the project initialization:
+
+- Initializes the root Git repository when missing.
+- Creates the expected root directories and seed files.
+- Creates `.codex`, `.claude`, and `.agents` links to `.ai`.
+- Initializes OpenSpec when missing.
+- Registers `.ai` as a submodule/gitlink of the root repository.
+- Creates the initial root commit when the root repository has no commits.
+
+When `.ai` is not already present and must be added from a real remote repository during setup, pass the repository URL:
 
 ```powershell
 .\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1 -AiRepositoryUrl "https://example.com/org/project-ai.git"
@@ -115,7 +135,7 @@ If the OpenSpec CLI is unavailable, stop and tell the user the command that must
 
 ## Git Rules
 
-If the root is not a Git repository, initialize it with `git init --initial-branch=main`. The setup script defaults to `main` through the `-DefaultBranch` parameter and falls back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
+The standard new-project flow is to clone or download `.ai` first, then run the setup script. If the root is not a Git repository, the setup script initializes it with `git init --initial-branch=main`. The setup script defaults to `main` through the `-DefaultBranch` parameter and falls back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
 
 If `.ai` exists as its own Git repository, register it from the root as the `.ai` submodule/gitlink. If a real AI repository URL is provided, use it in `.gitmodules`; otherwise preserve an existing `.gitmodules` URL or use `./.ai` only as a local bootstrap placeholder.
 

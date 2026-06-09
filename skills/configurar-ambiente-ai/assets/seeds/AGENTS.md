@@ -26,6 +26,12 @@ Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
 
 Because Git traverses these Windows junctions as directories on this host, `.gitignore` excludes `.codex/`, `.claude/`, and `.agents/`. Track canonical files through `.ai`.
 
+## Project Initialization
+
+New projects must start by cloning or downloading the shared `.ai` context into the project root. After `.ai` exists, run the `configurar-ambiente-ai` setup skill/script from the root.
+
+The setup skill/script is responsible for initializing the root Git repository, creating root directories and seed files, creating tool links, initializing OpenSpec, registering `.ai` as a submodule/gitlink, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
+
 ## Shared Assets
 
 - Shared rules must live in `.ai/rules`.
