@@ -25,6 +25,12 @@ From the project root:
 .\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1
 ```
 
+The default Git branch for newly initialized repositories is `main`. Override it only when a project has a documented reason:
+
+```powershell
+.\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1 -DefaultBranch "main"
+```
+
 When `.ai` must be added as a submodule from a real remote repository:
 
 ```powershell
@@ -110,7 +116,7 @@ If the OpenSpec CLI is unavailable, stop and tell the user the command that must
 
 ## Git Rules
 
-If the root is not a Git repository, initialize it with `git init`.
+If the root is not a Git repository, initialize it with `git init --initial-branch=main`. The setup script defaults to `main` through the `-DefaultBranch` parameter and falls back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
 
 If `.ai` exists as its own Git repository, register it from the root as the `.ai` submodule/gitlink. If a real AI repository URL is provided, use it in `.gitmodules`; otherwise preserve an existing `.gitmodules` URL or use `./.ai` only as a local bootstrap placeholder.
 

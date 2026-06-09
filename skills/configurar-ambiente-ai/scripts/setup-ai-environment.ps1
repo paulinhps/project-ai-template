@@ -3,12 +3,17 @@ param(
     [string]$ProjectRoot = (Get-Location).Path,
     [string]$AiRepositoryUrl = "",
     [string]$OpenSpecTools = "codex,claude",
+    [string]$DefaultBranch = "main",
     [string]$InitialCommitMessage = "chore: initialize AI project environment",
     [switch]$SkipInitialCommit
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($DefaultBranch)) {
+    throw "DefaultBranch cannot be empty"
+}
 
 $SkillRoot = Split-Path -Parent $PSScriptRoot
 $SeedRoot = Join-Path $SkillRoot "assets\seeds"
@@ -33,6 +38,26 @@ function Test-GitOk {
     param([string[]]$Arguments)
     & git @Arguments *> $null
     return $LASTEXITCODE -eq 0
+}
+
+function Initialize-GitRepository {
+    param([string]$Path = "")
+
+    $prefix = @()
+    if (-not [string]::IsNullOrWhiteSpace($Path)) {
+        $prefix = @("-C", $Path)
+    }
+
+    & git @prefix init "--initial-branch=$DefaultBranch"
+    if ($LASTEXITCODE -eq 0) {
+        return
+    }
+
+    Write-Step "Git does not support init --initial-branch; falling back to branch rename"
+    $initArgs = $prefix + @("init")
+    $renameArgs = $prefix + @("branch", "-M", $DefaultBranch)
+    Run-Git @initArgs
+    Run-Git @renameArgs
 }
 
 function Ensure-Directory {
@@ -173,7 +198,7 @@ function Ensure-AiSubmodule {
     if (-not (Test-Path -LiteralPath $aiPath)) {
         if ([string]::IsNullOrWhiteSpace($AiRepositoryUrl)) {
             Ensure-Directory $aiPath
-            Run-Git @("-C", $aiPath, "init")
+            Initialize-GitRepository $aiPath
         }
         else {
             Run-Git @("submodule", "add", $AiRepositoryUrl, ".ai")
@@ -182,7 +207,7 @@ function Ensure-AiSubmodule {
     }
 
     if (-not (Test-Path -LiteralPath (Join-Path $aiPath ".git"))) {
-        Run-Git @("-C", $aiPath, "init")
+        Initialize-GitRepository $aiPath
     }
 
     Ensure-AiReadme $aiPath
@@ -219,7 +244,7 @@ Write-Step "Configuring $root"
 
 if (-not (Test-GitOk @("rev-parse", "--is-inside-work-tree"))) {
     Write-Step "Initializing root Git repository"
-    Run-Git init
+    Initialize-GitRepository
 }
 
 $aiRoot = Join-Path $root ".ai"
