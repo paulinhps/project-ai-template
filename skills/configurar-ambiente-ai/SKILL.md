@@ -13,9 +13,11 @@ Use this skill to prepare a repository for the shared AI workflow used by this p
    - Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `openspec/`, `docs/`, `sources/`, and Git status.
    - Treat `.ai` as canonical. Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
 2. For new projects, ensure the `.ai` context has already been cloned or downloaded into the project root before root initialization.
-3. Prefer running `scripts/setup-ai-environment.ps1` from the project root.
-   - The script owns root Git initialization, root directory and seed file creation, root tool links, OpenSpec initialization, `.ai` submodule/gitlink registration, and the initial root commit.
-   - Do not tell the user to run `git init`, `git submodule add`, or the initial root commit manually before this script in the standard flow.
+3. Ask an AI agent to execute this prompt from the project root:
+   - `inialize project using .ai\skills\configurar-ambiente-ai\SKILL.md skill`
+   - The skill owns root Git initialization, root directory and seed file creation, root tool links, OpenSpec initialization, `.ai` submodule/gitlink registration, and the initial root commit.
+   - Do not tell the user to run `git init`, `git submodule add`, or the initial root commit manually before this skill in the standard flow.
+   - The skill may run `scripts/setup-ai-environment.ps1` as its implementation path.
 4. If the script cannot be used, follow its behavior manually and keep the same safety checks.
 5. Use `assets/seeds/AGENTS.md` and `assets/seeds/.gitignore` as the source templates for new projects.
 6. After changing any shared skill, rule, command, agent, template, MCP asset, setup convention, or seed file, create the next immutable prompt registry file under `.ai/prompts/registry`.
@@ -30,10 +32,10 @@ git clone <AI_REPOSITORY_URL> .ai
 
 If the shared context is distributed as a download instead of a Git repository, extract or copy it into `.ai`.
 
-Then run the setup script from the project root:
+Then ask an AI agent to execute this prompt from the project root:
 
-```powershell
-.\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1
+```text
+inialize project using .ai\skills\configurar-ambiente-ai\SKILL.md skill
 ```
 
 The default Git branch for newly initialized repositories is `main`. Override it only when a project has a documented reason:
@@ -42,7 +44,7 @@ The default Git branch for newly initialized repositories is `main`. Override it
 .\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1 -DefaultBranch "main"
 ```
 
-The setup script handles the rest of the project initialization:
+The skill handles the rest of the project initialization:
 
 - Initializes the root Git repository when missing.
 - Creates the expected root directories and seed files.
@@ -135,7 +137,7 @@ If the OpenSpec CLI is unavailable, stop and tell the user the command that must
 
 ## Git Rules
 
-The standard new-project flow is to clone or download `.ai` first, then run the setup script. If the root is not a Git repository, the setup script initializes it with `git init --initial-branch=main`. The setup script defaults to `main` through the `-DefaultBranch` parameter and falls back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
+The standard new-project flow is to clone or download `.ai` first, then ask an AI agent to execute the setup skill. If the root is not a Git repository, the skill initializes it with `git init --initial-branch=main`, usually by running `scripts/setup-ai-environment.ps1`. The setup script defaults to `main` through the `-DefaultBranch` parameter and falls back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
 
 If `.ai` exists as its own Git repository, register it from the root as the `.ai` submodule/gitlink. If a real AI repository URL is provided, use it in `.gitmodules`; otherwise preserve an existing `.gitmodules` URL or use `./.ai` only as a local bootstrap placeholder.
 

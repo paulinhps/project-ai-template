@@ -25,7 +25,7 @@ npm install -g @fission-ai/openspec@latest
 
 Use this sequence when creating a new repository that should adopt the shared AI structure.
 
-The project initialization decision is: first place the shared `.ai` content in the project root, then run the configuration skill. The setup skill/script owns root repository initialization, root files and directories, `.ai` submodule registration, OpenSpec initialization, and the initial root commit.
+The project initialization decision is: first place the shared `.ai` content in the project root, then ask an AI agent to execute the configuration skill. The skill owns root repository initialization, root files and directories, `.ai` submodule registration, OpenSpec initialization, and the initial root commit.
 
 1. Create or open the empty project directory. Do not run `git init` in the root manually.
 
@@ -48,13 +48,13 @@ For a local bootstrap, copy the prepared `.ai` directory into the project root:
 Copy-Item -Recurse <AI_CONTEXT_SOURCE> .ai
 ```
 
-3. Run the setup skill script from the project root.
+3. Execute this prompt from the project root:
 
-```powershell
-.\.ai\skills\configurar-ambiente-ai\scripts\setup-ai-environment.ps1
+```text
+inialize project using .ai\skills\configurar-ambiente-ai\SKILL.md skill
 ```
 
-The script is responsible for these root initialization tasks:
+The skill is responsible for these root initialization tasks:
 
 - Initialize the root Git repository when it does not exist.
 - Create root directories and seed files such as `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
@@ -92,7 +92,7 @@ sources/
 git status
 ```
 
-The setup script creates the initial root commit automatically when the root repository has no commits. Follow `.ai/rules/conventional-commits.md` for every later commit in the root repository and in the `.ai` repository.
+The skill creates the initial root commit automatically when the root repository has no commits. Follow `.ai/rules/conventional-commits.md` for every later commit in the root repository and in the `.ai` repository.
 
 ## How to Use the `.ai` Structure
 
