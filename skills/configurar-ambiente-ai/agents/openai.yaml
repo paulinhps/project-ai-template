@@ -1,0 +1,4 @@
+interface:
+  display_name: "Configurar Ambiente AI"
+  short_description: "Configura bases AI do projeto"
+  default_prompt: "Use $configurar-ambiente-ai para preparar a estrutura AI, links, OpenSpec, Git e commit inicial do projeto."

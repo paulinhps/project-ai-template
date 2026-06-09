@@ -1,0 +1,5 @@
+# Junction fallback paths for AI tool identities.
+# Canonical AI files live in .ai and should be tracked there only.
+.codex/
+.claude/
+.agents/

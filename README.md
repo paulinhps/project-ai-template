@@ -17,6 +17,7 @@
 ## Tool-Specific Overrides
 
 - `codex/overrides/`: Codex-specific behavior and local overrides.
+- `agents/overrides/`: Codex-specific behavior and local overrides.
 - `claude/overrides/`: Claude-specific behavior and local overrides.
 
 Shared behavior should live in shared folders first. Use tool-specific override folders only when Codex and Claude need different behavior.
