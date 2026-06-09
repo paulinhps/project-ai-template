@@ -20,7 +20,7 @@ The unquoted PowerShell form split the comma-separated tool list, so the success
 
 `.ai` is the canonical AI context directory.
 
-`.codex` and `.claude` point to `.ai`. `.agents` points to `.ai/agents`. The requested symbolic links required administrator privileges in this Windows environment, so directory junctions were used as the non-duplicating fallback. Changes made through `.ai`, `.codex`, or `.claude` affect the same underlying files. Changes made through `.agents` affect `.ai/agents`.
+`.codex`, `.claude`, and `.agents` point to `.ai`. The requested symbolic links required administrator privileges in this Windows environment, so directory junctions were used as the non-duplicating fallback. Changes made through `.ai`, `.codex`, `.claude`, or `.agents` affect the same underlying files.
 
 Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
 

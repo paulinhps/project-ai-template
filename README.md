@@ -2,7 +2,7 @@
 
 `.ai` is the canonical source of truth for AI-assisted development in this repository. It stores the shared operating rules, skills, commands, agents, templates, MCP assets, and prompt history used to start and maintain projects with AI.
 
-Root `.codex` and `.claude` paths should point to `.ai`, so changes made through `.ai`, `.codex`, or `.claude` affect the same underlying files. Root `.agents` should point to `.ai/agents`. On Windows, true symbolic links can require administrator privileges; directory junctions are the supported non-duplicating fallback.
+Root `.codex`, `.claude`, and `.agents` paths should point to `.ai`, so changes made through any of those tool paths affect the same underlying files. On Windows, true symbolic links can require administrator privileges; directory junctions are the supported non-duplicating fallback.
 
 ## Prerequisites
 
@@ -77,7 +77,7 @@ AGENTS.md
 .ai/
 .codex/      -> .ai
 .claude/     -> .ai
-.agents/     -> .ai/agents
+.agents/     -> .ai
 docs/
 openspec/
 sources/

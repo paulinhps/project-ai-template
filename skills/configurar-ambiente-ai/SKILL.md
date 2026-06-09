@@ -74,7 +74,7 @@ Ensure root links are mapped as:
 
 - `.codex` -> `.ai`
 - `.claude` -> `.ai`
-- `.agents` -> `.ai/agents`
+- `.agents` -> `.ai`
 
 On Windows, try symbolic links first. If privileges block symbolic links, use directory junctions and document the fallback in `AGENTS.md`.
 
@@ -93,8 +93,7 @@ When setting up a new project, recreate missing root files from those seeds befo
 
 - The project uses SDD with OpenSpec.
 - `.ai` is canonical.
-- `.codex` and `.claude` point to `.ai`.
-- `.agents` points to `.ai/agents`.
+- `.codex`, `.claude`, and `.agents` point to `.ai`.
 - Shared rules, skills, commands, agents, templates, and MCP assets live under `.ai`.
 - Prompt registry files are immutable and incrementally numbered.
 

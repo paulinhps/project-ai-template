@@ -113,11 +113,27 @@ function New-DirectoryLink {
     if (Test-Path -LiteralPath $LinkPath) {
         $item = Get-Item -LiteralPath $LinkPath -Force
         if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
-            Write-Step "Link already exists: $LinkPath"
-            return
-        }
+            $currentTarget = $item.Target
+            if ($currentTarget -is [array]) {
+                $currentTarget = $currentTarget[0]
+            }
 
-        throw "$LinkPath already exists and is not a link. Move it aside before running this setup."
+            $resolvedCurrentTarget = ""
+            if (-not [string]::IsNullOrWhiteSpace($currentTarget) -and (Test-Path -LiteralPath $currentTarget)) {
+                $resolvedCurrentTarget = (Resolve-Path -LiteralPath $currentTarget).Path
+            }
+
+            if ($resolvedCurrentTarget -eq $resolvedTarget) {
+                Write-Step "Link already exists: $LinkPath"
+                return
+            }
+
+            Remove-Item -LiteralPath $LinkPath -Force
+            Write-Step "Removed link with unexpected target $LinkPath -> $currentTarget"
+        }
+        else {
+            throw "$LinkPath already exists and is not a link. Move it aside before running this setup."
+        }
     }
 
     try {
@@ -137,8 +153,7 @@ function Ensure-AgentsFile {
 
     $required = @(
         '`.ai` is the canonical AI context directory.',
-        '`.codex` and `.claude` point to `.ai`.',
-        '`.agents` points to `.ai/agents`.',
+        '`.codex`, `.claude`, and `.agents` point to `.ai`.',
         'Shared agents must live in `.ai/agents`.',
         'Prompt source files are immutable and versioned under `.ai/prompts/registry`.'
     )
@@ -185,7 +200,7 @@ function Ensure-AiReadme {
 
 This directory is the canonical AI context for the project.
 
-Shared rules, skills, commands, agents, templates, prompts, and MCP assets live here. Root `.codex` and `.claude` links point to this directory. Root `.agents` points to `.ai/agents`.
+Shared rules, skills, commands, agents, templates, prompts, and MCP assets live here. Root `.codex`, `.claude`, and `.agents` links point to this directory.
 '@ | Set-Content -LiteralPath $readmePath -Encoding UTF8
 }
 
@@ -290,7 +305,7 @@ Ensure-Line $gitIgnorePath ".agents/"
 
 New-DirectoryLink (Join-Path $root ".codex") $aiRoot
 New-DirectoryLink (Join-Path $root ".claude") $aiRoot
-New-DirectoryLink (Join-Path $root ".agents") (Join-Path $aiRoot "agents")
+New-DirectoryLink (Join-Path $root ".agents") $aiRoot
 
 Ensure-OpenSpec $root
 Ensure-AiSubmodule $root
