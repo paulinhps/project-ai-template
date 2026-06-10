@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Clean Architecture"
+  short_description: "Guia Clean Architecture para .NET"
+  default_prompt: "Use $dotnet-clean-architecture para criar, revisar ou evoluir uma solucao .NET com Clean Architecture, DDD estrategico e baixo acoplamento."
