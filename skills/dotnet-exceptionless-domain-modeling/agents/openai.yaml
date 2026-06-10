@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Exceptionless Domain Modeling"
+  short_description: "Modelagem .NET com resultados explicitos"
+  default_prompt: "Use $dotnet-exceptionless-domain-modeling para modelar dominios .NET com DDD, invariantes protegidas e falhas de negocio explicitas sem fluxo por excecao."
