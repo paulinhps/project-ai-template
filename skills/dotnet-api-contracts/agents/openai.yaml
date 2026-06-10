@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet API Contracts"
+  short_description: "Contratos JSON para APIs .NET"
+  default_prompt: "Use $dotnet-api-contracts para criar, revisar ou evoluir contratos JSON em APIs .NET."
