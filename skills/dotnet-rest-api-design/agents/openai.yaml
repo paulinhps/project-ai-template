@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet REST API Design"
+  short_description: "Design REST para APIs .NET"
+  default_prompt: "Use $dotnet-rest-api-design para criar, revisar ou evoluir endpoints REST em uma API .NET."
