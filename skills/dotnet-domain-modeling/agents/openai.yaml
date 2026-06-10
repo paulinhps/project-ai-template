@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Domain Modeling"
+  short_description: "Modelagem de dominio .NET com DDD"
+  default_prompt: "Use $dotnet-domain-modeling para modelar entidades, value objects, aggregates, domain services e domain events em uma aplicacao .NET."
