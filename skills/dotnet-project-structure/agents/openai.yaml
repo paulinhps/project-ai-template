@@ -1,0 +1,4 @@
+interface:
+  display_name: ".NET Project Structure"
+  short_description: "Organize .NET repositories and projects."
+  default_prompt: "Use $dotnet-project-structure to design, review, or evolve a .NET repository structure with clear bounded contexts, layers, tests, documentation, contracts, and Building Blocks."
