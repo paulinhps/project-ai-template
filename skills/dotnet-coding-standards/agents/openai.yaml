@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Coding Standards"
+  short_description: "Padroes de codigo C#/.NET"
+  default_prompt: "Use $dotnet-coding-standards para criar, revisar, refatorar ou padronizar codigo C#/.NET com nomenclatura, idioma, estilo e legibilidade consistentes."
