@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Unit Testing"
+  short_description: "Guia de testes unitarios .NET"
+  default_prompt: "Use $dotnet-unit-testing para criar, revisar ou evoluir testes unitarios em aplicacoes .NET com Clean Architecture, DDD, APIs e servicos de aplicacao."
