@@ -1,0 +1,4 @@
+interface:
+  display_name: ".NET Error Handling"
+  short_description: "Standardize .NET error handling policies"
+  default_prompt: "Use $dotnet-error-handling to design safe, explicit, observable error handling for a .NET application."
