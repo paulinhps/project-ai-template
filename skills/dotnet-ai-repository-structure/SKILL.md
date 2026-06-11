@@ -8,6 +8,7 @@ description: Deterministic orchestrator for AI-governed repository roots and .NE
 Use this skill to connect two separate structures without mixing their scopes:
 
 - `configurar-ambiente-ai` owns the repository root, canonical `.ai` context, tool links, OpenSpec, root Git setup, `docs/`, and `sources/`.
+- `source-module-setup` owns source repository reference decisions under `sources/`, including local submodules and remote-backed submodules.
 - `dotnet-project-structure` owns the internal structure of a .NET project rooted at `sources/<dotnet-project>/`.
 - This skill owns the deterministic orchestration between the two.
 
@@ -31,11 +32,13 @@ When the root contains `.ai` and `sources/`, treat the root as the AI workspace 
 Always coordinate with these skills:
 
 - `configurar-ambiente-ai`
+- `source-module-setup`
 - `dotnet-project-structure`
 
 Conflict resolution:
 
 - Root workspace, `.ai`, `.codex`, `.claude`, `.agents`, OpenSpec, root `docs/`, root `sources/`, `.gitignore`, `.gitmodules`, and root Git rules follow `configurar-ambiente-ai`.
+- Source module Git reference behavior follows `source-module-setup` and `.ai/rules/repository-submodule-references.md`. Every source project must be registered as a root Git submodule.
 - .NET source layout, solution/project placement, tests, project docs, scripts, tools, deploy, and build folders follow `dotnet-project-structure`.
 - This skill decides which scope each action belongs to and prevents cross-scope writes.
 
@@ -112,10 +115,11 @@ Follow this order for a new AI-governed .NET repository:
 2. Verify the root has `.ai/`, `.codex`, `.claude`, `.agents`, `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
 3. Decide whether the .NET project is new local source or an existing remote repository.
 4. Create or register the project at `sources/<dotnet-project>/`.
-5. If the project already has its own repository, register it as a Git submodule instead of copying its source into the root repository.
-6. Change scope to `sources/<dotnet-project>/`.
-7. Apply `dotnet-project-structure` inside that project root.
-8. Return to the repository root and validate submodule state when applicable.
+5. If the project already has its own repository and remote `origin`, register it as a Git submodule using the remote URL instead of copying its source into the root repository.
+6. If the project is local-only or has no remote, register it as a local Git submodule and report `remote origin pending`.
+7. Change scope to `sources/<dotnet-project>/`.
+8. Apply `dotnet-project-structure` inside that project root.
+9. Return to the repository root and validate submodule state when applicable.
 
 ## Existing Repository Analysis
 
@@ -129,10 +133,12 @@ When reviewing an existing repository:
 6. Identify .NET projects outside `sources/`.
 7. Identify forbidden AI context directories inside .NET projects.
 8. Inspect `.gitmodules`.
-9. Determine whether projects in `sources/` are submodules.
+9. Determine whether projects in `sources/` are remote-backed submodules or local submodules.
 10. Suggest corrections without mixing root governance and project source scopes.
 
 ## Submodule Rules
+
+Use `.ai/rules/repository-submodule-references.md` for all source project references.
 
 When `sources/<dotnet-project>` is a submodule:
 
@@ -142,6 +148,13 @@ When `sources/<dotnet-project>` is a submodule:
 - Do not mix commits from the root repository with commits from the .NET project repository.
 - Commit only the submodule reference from the root repository.
 - Commit project source changes inside the project repository itself.
+
+When `sources/<dotnet-project>` is local-only:
+
+- Preserve it as an independent Git repository.
+- Register it as a local submodule in the root repository.
+- Report `remote origin pending`.
+- Replace the local `.gitmodules` URL with the remote `origin` URL after a remote exists and the user approves migration.
 
 ## Documentation Separation
 
@@ -168,7 +181,7 @@ Before creating or moving a directory, answer:
 
 1. Does this directory belong to the repository root or the .NET project?
 2. Is this content AI governance or source/project content?
-3. Should the .NET project be a Git submodule?
+3. Should the .NET project use a remote-backed submodule URL or a local submodule URL?
 4. Does `.ai` already exist at the repository root?
 5. Does root `sources/` already exist?
 6. Is the .NET project being created under `sources/<dotnet-project>/`?
@@ -190,6 +203,7 @@ Before finishing, verify:
 - [ ] The .NET project follows `dotnet-project-structure`.
 - [ ] The repository root does not contain .NET source code outside `sources/`.
 - [ ] Submodules were preserved.
+- [ ] Local-only source repositories are registered as local submodules.
 - [ ] Root documentation and project documentation are separated.
 - [ ] The final structure is deterministic and predictable.
 

@@ -25,7 +25,7 @@ npm install -g @fission-ai/openspec@latest
 
 Use this sequence when creating a new repository that should adopt the shared AI structure.
 
-The project initialization decision is: first place the shared `.ai` content in the project root, then ask an AI agent to execute the configuration skill. The skill owns root repository initialization, root files and directories, `.ai` submodule registration, OpenSpec initialization, and the initial root commit.
+The project initialization decision is: first place the shared `.ai` content in the project root, then ask an AI agent to execute the configuration skill. The skill owns root repository initialization, root files and directories, `.ai` reference registration, OpenSpec initialization, and the initial root commit.
 
 1. Create or open the empty project directory. Do not run `git init` in the root manually.
 
@@ -60,7 +60,8 @@ The skill is responsible for these root initialization tasks:
 - Create root directories and seed files such as `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
 - Create `.codex`, `.claude`, and `.agents` links to `.ai`.
 - Initialize OpenSpec when `openspec/` is missing.
-- Register `.ai` as a submodule/gitlink of the root repository.
+- Register `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
+- Ignore local-only `.ai` contexts in the root repository when `.ai` is copied manually or has no remote.
 - Create the initial root commit when the root repository has no commits.
 
 4. Initialize OpenSpec manually only if the setup script could not run it.
@@ -93,6 +94,17 @@ git status
 ```
 
 The skill creates the initial root commit automatically when the root repository has no commits. Follow `.ai/rules/conventional-commits.md` for every later commit in the root repository and in the `.ai` repository.
+
+## Repository References
+
+The root repository tracks reproducible references, not copied implementation trees.
+
+- Copied `.ai` directories without Git metadata are local-only and should be ignored from the root repository.
+- Local `.ai` Git repositories without `origin` are local bootstrap state; they may be ignored from the root repository or explicitly registered as local submodules.
+- Remote-backed `.ai` repositories should be registered as submodules using the remote URL.
+- Source projects under `sources/` always become submodules: local repositories without `origin` use local URLs, and repositories with `origin` use remote URLs.
+
+See `.ai/rules/repository-submodule-references.md` for the full rule.
 
 ## How to Use the `.ai` Structure
 

@@ -1,6 +1,6 @@
 ---
 name: configurar-ambiente-ai
-description: Configure the project AI environment according to this repository's OpenSpec/SDD conventions. Use when Codex needs to initialize or repair root AI setup: .ai canonical structure, .codex/.claude/.agents links, docs and sources folders, AGENTS.md and .gitignore assertions, OpenSpec initialization, Git initialization, .ai submodule registration, and the root initial commit.
+description: Configure the project AI environment according to this repository's OpenSpec/SDD conventions. Use when Codex needs to initialize or repair root AI setup: .ai canonical structure, .codex/.claude/.agents links, docs and sources folders, AGENTS.md and .gitignore assertions, OpenSpec initialization, Git initialization, .ai reference registration or ignore configuration, and the root initial commit.
 ---
 
 # Configurar Ambiente AI
@@ -15,12 +15,17 @@ Use this skill to prepare a repository for the shared AI workflow used by this p
 2. For new projects, ensure the `.ai` context has already been cloned or downloaded into the project root before root initialization.
 3. Ask an AI agent to execute this prompt from the project root:
    - `inialize project using .ai\skills\configurar-ambiente-ai\SKILL.md skill`
-   - The skill owns root Git initialization, root directory and seed file creation, root tool links, OpenSpec initialization, `.ai` submodule/gitlink registration, and the initial root commit.
+   - The skill owns root Git initialization, root directory and seed file creation, root tool links, OpenSpec initialization, `.ai` reference registration or ignore configuration, and the initial root commit.
    - Do not tell the user to run `git init`, `git submodule add`, or the initial root commit manually before this skill in the standard flow.
    - The skill may run `scripts/setup-ai-environment.ps1` as its implementation path.
 4. If the script cannot be used, follow its behavior manually and keep the same safety checks.
 5. Use `assets/seeds/AGENTS.md` and `assets/seeds/.gitignore` as the source templates for new projects.
-6. After changing any shared skill, rule, command, agent, template, MCP asset, setup convention, or seed file, create the next immutable prompt registry file under `.ai/prompts/registry`.
+6. When root files already exist, compare them against the required assertions before changing anything.
+7. If an existing `AGENTS.md`, `.gitignore`, README, documentation structure, or source layout conflicts with the canonical structure, stop and ask for one of these decisions:
+   - Merge: preserve project-specific content and add missing canonical context.
+   - Replace: overwrite the conflicting file or structure with the canonical seed.
+   - Restructure: move documentation and source code into the expected `docs/` and `sources/` locations before continuing.
+8. After changing any shared skill, rule, command, agent, template, MCP asset, setup convention, or seed file, create the next immutable prompt registry file under `.ai/prompts/registry`.
 
 ## Quick Start
 
@@ -50,7 +55,8 @@ The skill handles the rest of the project initialization:
 - Creates the expected root directories and seed files.
 - Creates `.codex`, `.claude`, and `.agents` links to `.ai`.
 - Initializes OpenSpec when missing.
-- Registers `.ai` as a submodule/gitlink of the root repository.
+- Registers `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
+- Ignores local-only `.ai` contexts in the root repository when `.ai` is copied manually or has no remote.
 - Creates the initial root commit when the root repository has no commits.
 
 When `.ai` is not already present and must be added from a real remote repository during setup, pass the repository URL:
@@ -111,6 +117,12 @@ assets/seeds/.gitignore
 
 When setting up a new project, recreate missing root files from those seeds before applying assertions. When a structural rule changes and impacts future projects, update the relevant seed in this skill.
 
+When a root file already exists, do not silently overwrite it. If it is missing required canonical assertions, request a decision:
+
+- Merge canonical assertions into the existing file while preserving project-specific guidance.
+- Replace the existing file with the canonical seed.
+- Restructure the project first, moving root documentation into `docs/` and source code into `sources/` before applying the seed.
+
 `AGENTS.md` must specify:
 
 - The project uses SDD with OpenSpec.
@@ -139,7 +151,15 @@ If the OpenSpec CLI is unavailable, stop and tell the user the command that must
 
 The standard new-project flow is to clone or download `.ai` first, then ask an AI agent to execute the setup skill. If the root is not a Git repository, the skill initializes it with `git init --initial-branch=main`, usually by running `scripts/setup-ai-environment.ps1`. The setup script defaults to `main` through the `-DefaultBranch` parameter and falls back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
 
-If `.ai` exists as its own Git repository, register it from the root as the `.ai` submodule/gitlink. If a real AI repository URL is provided, use it in `.gitmodules`; otherwise preserve an existing `.gitmodules` URL or use `./.ai` only as a local bootstrap placeholder.
+Use `.ai/rules/repository-submodule-references.md` for reference decisions.
+
+If `.ai` is copied or downloaded without Git metadata, do not register it as a submodule. Add `.ai/` to the root `.gitignore` and report that the AI context is local-only.
+
+If `.ai` is a Git repository without `origin`, do not register it as a submodule automatically. Add `.ai/` to the root `.gitignore` and report `remote origin pending`.
+
+If the project owner explicitly chooses local `.ai` submodule mode, run the setup script with `-RegisterLocalAiSubmodule` and use `./.ai` as the local bootstrap URL.
+
+If `.ai` has `origin`, or if `-AiRepositoryUrl` is provided, register it from the root as the `.ai` submodule/gitlink and write the remote URL to `.gitmodules`. Do not use `./.ai` as the final submodule URL for reusable projects.
 
 If `.ai` does not exist and `-AiRepositoryUrl` is provided, add it with:
 

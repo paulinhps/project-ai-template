@@ -34,7 +34,17 @@ New projects must start by cloning or downloading the shared `.ai` context into 
 inialize project using .ai\skills\configurar-ambiente-ai\SKILL.md skill
 ```
 
-The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating tool links, initializing OpenSpec, registering `.ai` as a submodule/gitlink, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
+The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating tool links, initializing OpenSpec, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
+
+## Repository References
+
+The root repository tracks reproducible references, not copied implementation trees.
+
+- If `.ai` was copied or downloaded without Git metadata, keep `.ai/` ignored in the root repository.
+- If `.ai` is a Git repository without `origin`, keep `.ai/` ignored and report `remote origin pending`, unless the project owner explicitly chooses local `.ai` submodule mode.
+- If `.ai` has `origin`, register it as a submodule using the remote URL.
+- Projects under `sources/` always become submodules: local repositories without `origin` use local URLs, and repositories with `origin` use remote URLs.
+- Follow `.ai/rules/repository-submodule-references.md` for all reference decisions.
 
 ## Shared Assets
 

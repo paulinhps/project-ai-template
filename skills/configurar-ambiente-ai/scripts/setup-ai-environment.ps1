@@ -5,6 +5,7 @@ param(
     [string]$OpenSpecTools = "codex,claude",
     [string]$DefaultBranch = "main",
     [string]$InitialCommitMessage = "chore: initialize AI project environment",
+    [switch]$RegisterLocalAiSubmodule,
     [switch]$SkipInitialCommit
 )
 
@@ -81,6 +82,34 @@ function Ensure-Line {
     if ($content -notcontains $Line) {
         Add-Content -LiteralPath $Path -Value $Line
     }
+}
+
+function Remove-Line {
+    param(
+        [string]$Path,
+        [string]$Line
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return
+    }
+
+    $content = Get-Content -LiteralPath $Path -ErrorAction SilentlyContinue
+    $filtered = @($content | Where-Object { $_ -ne $Line })
+    if ($filtered.Count -ne $content.Count) {
+        Set-Content -LiteralPath $Path -Value $filtered
+    }
+}
+
+function Get-GitOriginUrl {
+    param([string]$Path)
+
+    $origin = & git -C $Path remote get-url origin 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($origin)) {
+        return $origin.Trim()
+    }
+
+    return ""
 }
 
 function Copy-SeedIfMissing {
@@ -161,7 +190,7 @@ function Ensure-AgentsFile {
     $text = Get-Content -LiteralPath $Path -Raw
     foreach ($snippet in $required) {
         if (-not $text.Contains($snippet)) {
-            throw "AGENTS.md exists but is missing required assertion: $snippet"
+            throw "AGENTS.md exists but is missing required assertion: $snippet. Choose a setup decision before continuing: merge canonical assertions into the existing file, replace it with the canonical seed, or restructure existing project documentation and source layout first."
         }
     }
 }
@@ -209,20 +238,22 @@ function Ensure-AiSubmodule {
 
     $aiPath = Join-Path $Root ".ai"
     $gitModulesPath = Join-Path $Root ".gitmodules"
+    $gitIgnorePath = Join-Path $Root ".gitignore"
 
     if (-not (Test-Path -LiteralPath $aiPath)) {
         if ([string]::IsNullOrWhiteSpace($AiRepositoryUrl)) {
-            Ensure-Directory $aiPath
-            Initialize-GitRepository $aiPath
+            throw ".ai must exist before setup. Clone, download, or provide -AiRepositoryUrl."
         }
         else {
             Run-Git @("submodule", "add", $AiRepositoryUrl, ".ai")
-            return
+            return $true
         }
     }
 
     if (-not (Test-Path -LiteralPath (Join-Path $aiPath ".git"))) {
-        Initialize-GitRepository $aiPath
+        Write-Step ".ai is a local copied context without Git metadata; ignoring it in the root repository"
+        Ensure-Line $gitIgnorePath ".ai/"
+        return $false
     }
 
     Ensure-AiReadme $aiPath
@@ -235,19 +266,26 @@ function Ensure-AiSubmodule {
     }
 
     $url = $AiRepositoryUrl
-    if ([string]::IsNullOrWhiteSpace($url) -and (Test-Path -LiteralPath $gitModulesPath)) {
-        $existingUrl = & git config -f $gitModulesPath --get submodule..ai.url
-        if ($LASTEXITCODE -eq 0) {
-            $url = $existingUrl
-        }
-    }
     if ([string]::IsNullOrWhiteSpace($url)) {
+        $url = Get-GitOriginUrl $aiPath
+    }
+
+    if ([string]::IsNullOrWhiteSpace($url)) {
+        if (-not $RegisterLocalAiSubmodule) {
+            Write-Step ".ai is a Git repository without remote origin; ignoring it in the root repository"
+            Ensure-Line $gitIgnorePath ".ai/"
+            return $false
+        }
+
+        Write-Step ".ai is a Git repository without remote origin; registering it as a local submodule"
         $url = "./.ai"
     }
 
+    Remove-Line $gitIgnorePath ".ai/"
     Run-Git @("config", "-f", $gitModulesPath, "submodule..ai.path", ".ai")
     Run-Git @("config", "-f", $gitModulesPath, "submodule..ai.url", $url)
-    Run-Git @("add", ".gitmodules", ".ai")
+    Run-Git @("add", ".gitignore", ".gitmodules", ".ai")
+    return $true
 }
 
 $root = (Resolve-Path -LiteralPath $ProjectRoot).Path
@@ -263,7 +301,13 @@ if (-not (Test-GitOk @("rev-parse", "--is-inside-work-tree"))) {
 }
 
 $aiRoot = Join-Path $root ".ai"
-Ensure-Directory $aiRoot
+if (-not (Test-Path -LiteralPath $aiRoot)) {
+    if ([string]::IsNullOrWhiteSpace($AiRepositoryUrl)) {
+        throw ".ai must exist before setup. Clone, download, or provide -AiRepositoryUrl."
+    }
+
+    Run-Git @("submodule", "add", $AiRepositoryUrl, ".ai")
+}
 
 $aiDirs = @(
     "agents",
@@ -308,13 +352,19 @@ New-DirectoryLink (Join-Path $root ".claude") $aiRoot
 New-DirectoryLink (Join-Path $root ".agents") $aiRoot
 
 Ensure-OpenSpec $root
-Ensure-AiSubmodule $root
+$aiRegisteredAsSubmodule = Ensure-AiSubmodule $root
 
 if (-not $SkipInitialCommit) {
     $hasHead = Test-GitOk @("rev-parse", "--verify", "HEAD")
     if (-not $hasHead) {
         Write-Step "Creating root initial commit"
-        Run-Git @("add", "AGENTS.md", ".gitignore", ".gitmodules", "docs", "sources", "openspec", ".ai")
+        Run-Git @("add", "AGENTS.md", ".gitignore", "docs", "sources", "openspec")
+        if (Test-Path -LiteralPath ".gitmodules") {
+            Run-Git @("add", ".gitmodules")
+        }
+        if ($aiRegisteredAsSubmodule) {
+            Run-Git @("add", ".ai")
+        }
         Run-Git @("commit", "-m", $InitialCommitMessage)
     }
     else {

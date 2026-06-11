@@ -39,7 +39,7 @@ Application source code must not be created directly in the root repository. Onl
 
 ### Rule 2: Independent Source Repositories
 
-Every source module must be an independent Git repository with its own Git metadata, README, branches, commits, and remote `origin` when a remote exists. A new local repository may temporarily lack `origin`, but the agent must report `remote origin pending`.
+Every source module must be an independent Git repository with its own Git metadata, README, branches, commits, and remote `origin` when a remote exists. Every source module must also be registered as a Git submodule of the root repository. A new local repository may temporarily lack `origin`, but it is still registered as a local submodule and the agent must report `remote origin pending`.
 
 ### Rule 3: Remote Repositories Become Submodules
 
@@ -49,9 +49,13 @@ When `remote_repository` is provided and `register_submodule` is true, configure
 git submodule add <remote-repository-url> sources/<module-name>
 ```
 
+When an existing module under `sources/` is a Git repository and has `origin`, use that remote URL when registering the root submodule reference. When it does not have `origin`, register it as a local submodule.
+
 ### Rule 4: New Local Repositories Are Bootstrapped Independently
 
 When no `remote_repository` is provided, create a standalone Git repository under `sources/<module-name>`, generate `README.md` when requested, and create the first commit. Leave it ready for future remote configuration.
+
+Register the new local repository as a local submodule immediately. A local source repository without `origin` is still a root submodule; only its `.gitmodules` URL changes when a remote is later configured.
 
 ### Rule 5: Existing Repositories Require Verification
 
@@ -90,9 +94,11 @@ Enforce these invariants for every module:
 - The module path is inside `sources/`.
 - The module is an independent Git repository.
 - The module has its own README, branches, commits, and repository history.
+- The module is registered as a Git submodule of the root repository.
 - The module has a remote `origin` when a remote repository exists.
-- New local modules without a remote are allowed only as a bootstrap state; report `remote origin pending`.
-- Remote-backed modules should be registered as Git submodules of the root repository whenever possible.
+- New local modules without a remote are allowed only as a bootstrap state; register them as local submodules and report `remote origin pending`.
+- Remote-backed modules should be registered as Git submodules of the root repository using the remote URL.
+- Local-only modules should be registered as local Git submodules until they are migrated to a remote-backed submodule.
 - Existing repositories and submodules must never be overwritten automatically.
 
 ## Mandatory Preflight
@@ -140,7 +146,9 @@ Use this deterministic selection order:
 2. If `target_path` exists, run Flow C and stop before modifying it.
 3. If `remote_repository` is provided and `register_submodule` is true, run Flow A.
 4. If `remote_repository` is provided and submodule registration is not possible, explain why and ask before cloning directly.
-5. If no `remote_repository` is provided, run Flow B.
+5. If no `remote_repository` is provided, run Flow B and register a local submodule.
+
+Follow `.ai/rules/repository-submodule-references.md` for all root reference decisions.
 
 ## Flow A: Existing Remote Repository
 
@@ -217,6 +225,7 @@ Expected result:
 Independent repository created
 README generated
 Initial commit generated
+Root .gitmodules includes sources/backend using a local URL
 remote origin pending
 ```
 
@@ -234,7 +243,7 @@ Report that future remote configuration should use:
 git -C sources/backend remote add origin <remote-repository-url>
 ```
 
-After a remote is added later, register the module as a submodule only through an explicit migration plan.
+After a remote is added later, update `.gitmodules` from the local URL to the remote URL through an explicit migration plan.
 
 ## Flow C: Existing Directory or Repository Validation
 
@@ -250,6 +259,8 @@ Is .git a directory or file?
 Does remote origin exist?
 Is it already a submodule?
 Is it referenced in .gitmodules?
+If it has origin, what remote URL should be used?
+If it has no origin, what local URL is configured?
 Does the module have uncommitted changes?
 What branch or detached commit is checked out?
 What is the latest commit?
@@ -286,6 +297,34 @@ git config -f .gitmodules --get-regexp 'submodule\..*\.path'
 ```
 
 Do not continue until the user confirms the next action if any change could overwrite, replace, reinitialize, or detach existing work.
+
+## Validation And Repair Mode
+
+Use this mode when the user asks to validate the `sources/` structure or repair submodule references.
+
+Inspect every direct child under `sources/` and report:
+
+```text
+Module path
+Is Git initialized?
+Does remote origin exist?
+Configured .gitmodules path
+Configured .gitmodules URL
+Expected URL: origin when present, local URL when origin is missing
+Current branch or detached commit
+Working tree status
+Required action
+```
+
+Repair rules:
+
+- If a source directory is not a Git repository, stop and ask whether it should become a repository or be moved out of `sources/`.
+- If a source repository is missing from `.gitmodules`, register it as a submodule.
+- If a source repository has `origin` but `.gitmodules` uses a local URL, update `.gitmodules` to the remote `origin` URL.
+- If a source repository has no `origin`, keep or set a local URL in `.gitmodules` and report `remote origin pending`.
+- Never overwrite source files or remove Git metadata while repairing references.
+
+After repair, stage only root metadata and submodule gitlinks in the root repository. Commit source changes inside the source repository first.
 
 ## Safety Requirements
 
@@ -330,7 +369,7 @@ git commit -m "chore: add <module-name> source submodule"
 
 ### Registration
 
-Use when a valid repository already exists at the target and must be registered as a submodule. This is a migration, not a default action. Stop, report findings, and request confirmation before proceeding.
+Use when a valid repository already exists at the target and must be registered as a submodule. Registration is required for every source repository, but stop, report findings, and request confirmation before proceeding if the target has uncommitted work, an unexpected remote, or a conflicting `.gitmodules` entry.
 
 Preferred clean path:
 
@@ -382,16 +421,15 @@ Then inspect `.git/modules/sources/<module-name>` and remove leftover metadata o
 
 ### Migration
 
-Use migration when converting a local repository to a remote-backed submodule:
+Use migration when converting a local submodule to a remote-backed submodule:
 
 1. Verify the local repository is committed and clean.
 2. Add or confirm `origin`.
 3. Push the local repository to the remote.
-4. Preserve or back up the local directory.
-5. Remove or relocate the local checkout only with explicit confirmation.
-6. Add the remote as a submodule with `git submodule add`.
-7. Verify `.gitmodules`, submodule status, and checked-out commit.
-8. Commit root repository metadata.
+4. Update `.gitmodules` from the local URL to the remote URL.
+5. Run submodule sync/update when needed.
+6. Verify `.gitmodules`, submodule status, and checked-out commit.
+7. Commit root repository metadata.
 
 Never migrate by deleting or overwriting the existing local repository without confirmation.
 
@@ -403,7 +441,8 @@ Run Flow C. Common outcomes:
 
 - Empty directory: ask whether to remove it, use it for a new local repository, or choose another module name.
 - Existing non-Git directory: stop and ask whether it should become a repository.
-- Existing Git repository: report origin, branch, status, and whether it is already a submodule.
+- Existing Git repository with origin: report origin, branch, status, and whether it is already a submodule; use the remote URL for registration or correction.
+- Existing Git repository without origin: report `remote origin pending`; register or validate it as a local submodule.
 - Existing submodule: run sync/update commands instead of adding it again.
 
 ### `.gitmodules` references the path but checkout is missing
@@ -425,7 +464,7 @@ git -C sources/<module-name> checkout <branch-name>
 
 ### Remote origin is missing
 
-For bootstrap local repositories, report `remote origin pending`. Add a remote only when the user provides a URL:
+For bootstrap local repositories, register the module as a local submodule and report `remote origin pending`. Add a remote only when the user provides a URL:
 
 ```bash
 git -C sources/<module-name> remote add origin <remote-repository-url>
@@ -442,6 +481,7 @@ Do not assume dirty root changes are related. Report the status and proceed only
 - Use Conventional Commits for both root repository commits and module commits.
 - Commit module repository changes inside the module first, then commit submodule pointer changes in the root repository.
 - Keep `.gitmodules` tracked in the root repository.
+- Keep every source module registered as a submodule; use local URLs only while `origin` is missing.
 - Do not vendor source repositories by copying their files into the root repository.
 - Do not mix multiple application modules in one Git repository unless the user explicitly chooses a monorepo module under `sources/`.
 - Prefer explicit reports over silent repair when repository state is ambiguous.
