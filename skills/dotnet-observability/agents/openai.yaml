@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Observability"
+  short_description: "Observabilidade para .NET"
+  default_prompt: "Use $dotnet-observability para implementar ou revisar logs, metricas, tracing, correlation id e health checks em uma aplicacao .NET."
