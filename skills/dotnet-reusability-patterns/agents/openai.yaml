@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Reusability Patterns"
+  short_description: "Reutilizacao sustentavel para .NET"
+  default_prompt: "Use $dotnet-reusability-patterns para criar, revisar ou refatorar componentes reutilizaveis, building blocks, contratos compartilhados e bibliotecas .NET sem violar limites de dominio."
