@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Microservices Patterns"
+  short_description: "Microservices architecture for .NET"
+  default_prompt: "Use $dotnet-microservices-patterns to design, review, or evolve .NET microservice architecture."
