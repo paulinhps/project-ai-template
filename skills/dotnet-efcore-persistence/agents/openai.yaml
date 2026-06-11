@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet EF Core Persistence"
+  short_description: "Guia EF Core para persistencia .NET"
+  default_prompt: "Use $dotnet-efcore-persistence para implementar, revisar ou evoluir persistencia com Entity Framework Core em aplicacoes .NET com Clean Architecture."
