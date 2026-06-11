@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Security Baseline"
+  short_description: "Base de seguranca para .NET"
+  default_prompt: "Use $dotnet-security-baseline para revisar ou implementar uma base minima de seguranca em uma aplicacao .NET."
