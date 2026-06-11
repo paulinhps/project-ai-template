@@ -1,0 +1,4 @@
+interface:
+  display_name: ".NET AI Repository Structure"
+  short_description: "Bridge .ai root and sources .NET projects."
+  default_prompt: "Use $dotnet-ai-repository-structure to create, review, or repair an AI-governed repository where .ai owns the root workspace and .NET projects live under sources/<project-name>."
