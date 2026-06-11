@@ -40,8 +40,9 @@ When creating or changing .NET structure:
 4. Preserve local conventions unless they weaken boundaries, discoverability, or consistency.
 5. Create only folders and projects with clear responsibility and ownership.
 6. Keep production code under `src/` and tests under `tests/`.
-7. Verify namespaces match physical directories.
-8. Run the validation checklist before finishing.
+7. Ensure the .NET repository root has a .NET-aware `.gitignore`; run `dotnet new gitignore` when it is missing.
+8. Verify namespaces match physical directories.
+9. Run the validation checklist before finishing.
 
 ## Repository Root
 
@@ -56,12 +57,21 @@ Prefer this reusable root layout:
   scripts/
   deploy/
   build/
+  .gitignore
   README.md
   CHANGELOG.md
   LICENSE
 ```
 
 Use `src/` for production code, `tests/` for automated tests, `docs/` for durable documentation, `tools/` for auxiliary tools, `scripts/` for automation, `deploy/` for deployment assets, and `build/` for repository-level build configuration. Avoid production projects outside `src/`.
+
+Create the repository `.gitignore` with:
+
+```bash
+dotnet new gitignore
+```
+
+Run it from the .NET repository root before generating, restoring, building, testing, or running projects when `.gitignore` is missing. This prevents generated `bin/`, `obj/`, IDE, test-result, and package artifacts from becoming routine AI cleanup work.
 
 ## Modular Monolith
 
@@ -442,19 +452,21 @@ When generating a new .NET structure:
 1. Identify the target architecture.
 2. Identify bounded contexts, modules, services, and ownership.
 3. Choose modular monolith, microservice, or simpler layered layout.
-4. Create only required layers and projects.
-5. Create tests aligned to the context and risk.
-6. Create documentation directories that the project will actually use.
-7. Add Building Blocks only for concrete technical reuse.
-8. Add Contracts only for external or cross-boundary contracts.
-9. Avoid generic shared projects and vague folders.
-10. Verify namespaces, solution files, and project references.
+4. Run `dotnet new gitignore` at the .NET repository root when `.gitignore` is missing.
+5. Create only required layers and projects.
+6. Create tests aligned to the context and risk.
+7. Create documentation directories that the project will actually use.
+8. Add Building Blocks only for concrete technical reuse.
+9. Add Contracts only for external or cross-boundary contracts.
+10. Avoid generic shared projects and vague folders.
+11. Verify namespaces, solution files, and project references.
 
 ## Validation Checklist
 
 Before finishing any structure change, verify:
 
 - [ ] Structure reflects the architecture.
+- [ ] A .NET-aware `.gitignore` exists at the repository root.
 - [ ] Bounded contexts are visible.
 - [ ] Domain code is isolated.
 - [ ] Projects have clear responsibility.
