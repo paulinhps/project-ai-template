@@ -31,7 +31,7 @@ Because Git traverses these Windows junctions as directories on this host, `.git
 New projects must start by cloning or downloading the shared `.ai` context into the project root. After `.ai` exists, ask an AI agent to execute this prompt from the root:
 
 ```text
-inialize project using .ai\skills\configurar-ambiente-ai\SKILL.md skill
+initialize project using .ai\skills\setup-ai-environment\SKILL.md skill
 ```
 
 The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating tool links, initializing OpenSpec, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.

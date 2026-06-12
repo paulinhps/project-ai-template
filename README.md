@@ -51,7 +51,7 @@ Copy-Item -Recurse <AI_CONTEXT_SOURCE> .ai
 3. Execute this prompt from the project root:
 
 ```text
-inialize project using .ai\skills\configurar-ambiente-ai\SKILL.md skill
+initialize project using .ai\skills\setup-ai-environment\SKILL.md skill
 ```
 
 The skill is responsible for these root initialization tasks:

@@ -1,13 +1,13 @@
 ---
 name: dotnet-ai-repository-structure
-description: Deterministic orchestrator for AI-governed repository roots and .NET project roots. Use when creating, reviewing, or repairing repositories that use canonical AI context in `.ai`, root workspace folders such as `docs/` and `sources/`, OpenSpec/Git setup from `configurar-ambiente-ai`, and .NET project structure from `dotnet-project-structure` under `sources/<dotnet-project>/`.
+description: Deterministic orchestrator for AI-governed repository roots and .NET project roots. Use when creating, reviewing, or repairing repositories that use canonical AI context in `.ai`, root workspace folders such as `docs/` and `sources/`, OpenSpec/Git setup from `setup-ai-environment`, and .NET project structure from `dotnet-project-structure` under `sources/<dotnet-project>/`.
 ---
 
 # Dotnet AI Repository Structure
 
 Use this skill to connect two separate structures without mixing their scopes:
 
-- `configurar-ambiente-ai` owns the repository root, canonical `.ai` context, tool links, OpenSpec, root Git setup, `docs/`, and `sources/`.
+- `setup-ai-environment` owns the repository root, canonical `.ai` context, tool links, OpenSpec, root Git setup, `docs/`, and `sources/`.
 - `source-module-setup` owns source repository reference decisions under `sources/`, including local submodules and remote-backed submodules.
 - `dotnet-project-structure` owns the internal structure of a .NET project rooted at `sources/<dotnet-project>/`.
 - This skill owns the deterministic orchestration between the two.
@@ -31,13 +31,13 @@ When the root contains `.ai` and `sources/`, treat the root as the AI workspace 
 
 Always coordinate with these skills:
 
-- `configurar-ambiente-ai`
+- `setup-ai-environment`
 - `source-module-setup`
 - `dotnet-project-structure`
 
 Conflict resolution:
 
-- Root workspace, `.ai`, `.codex`, `.claude`, `.agents`, OpenSpec, root `docs/`, root `sources/`, `.gitignore`, `.gitmodules`, and root Git rules follow `configurar-ambiente-ai`.
+- Root workspace, `.ai`, `.codex`, `.claude`, `.agents`, OpenSpec, root `docs/`, root `sources/`, `.gitignore`, `.gitmodules`, and root Git rules follow `setup-ai-environment`.
 - Source module Git reference behavior follows `source-module-setup` and `.ai/rules/repository-submodule-references.md`. Every source project must be registered as a root Git submodule.
 - .NET source layout, solution/project placement, tests, project docs, scripts, tools, deploy, and build folders follow `dotnet-project-structure`.
 - This skill decides which scope each action belongs to and prevents cross-scope writes.
@@ -105,13 +105,13 @@ Use `sources/<dotnet-project>/` for:
 - Project-specific scripts, tools, deploy assets, and build configuration.
 - Application configuration owned by that .NET project.
 
-Do not apply `configurar-ambiente-ai` inside `sources/<dotnet-project>/`.
+Do not apply `setup-ai-environment` inside `sources/<dotnet-project>/`.
 
 ## Creation Workflow
 
 Follow this order for a new AI-governed .NET repository:
 
-1. Prepare or repair the repository root with `configurar-ambiente-ai`.
+1. Prepare or repair the repository root with `setup-ai-environment`.
 2. Verify the root has `.ai/`, `.codex`, `.claude`, `.agents`, `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
 3. Decide whether the .NET project is new local source or an existing remote repository.
 4. Create or register the project at `sources/<dotnet-project>/`.
@@ -234,7 +234,7 @@ Also avoid:
 - Mixing skills, rules, commands, or agent assets with backend source code.
 - Creating multiple `.ai` directories for each project.
 - Running `dotnet-project-structure` at the AI workspace root.
-- Running `configurar-ambiente-ai` inside `sources/<dotnet-project>/`.
+- Running `setup-ai-environment` inside `sources/<dotnet-project>/`.
 - Creating .NET code directly at the root.
 - Flattening submodules into the root repository.
 
