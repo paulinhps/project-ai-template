@@ -180,7 +180,6 @@ python
 dotnet
 java
 make
-openspec
 ```
 
 For each tool, report:

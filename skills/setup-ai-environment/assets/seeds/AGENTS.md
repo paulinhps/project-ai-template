@@ -1,20 +1,6 @@
 # AI Agent Guide
 
-This project uses SDD with OpenSpec as the source for propose -> apply -> archive workflows.
-
-OpenSpec was installed with:
-
-```bash
-npm install -g @fission-ai/openspec@latest
-```
-
-OpenSpec was initialized with:
-
-```bash
-openspec init --tools "codex,claude" .
-```
-
-The unquoted PowerShell form split the comma-separated tool list, so the successful command quoted `codex,claude`.
+This project supports SDD as an optional workflow. Do not configure any SDD/planning tool unless the user explicitly asks for that specific tool.
 
 ## AI Context
 
@@ -40,7 +26,7 @@ New projects must start by cloning or downloading the shared `.ai` context into 
 initialize project using .ai/skills/setup-ai-environment/SKILL.md skill
 ```
 
-The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating `.ai-overlay/README.md`, creating tool links, initializing OpenSpec, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
+The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating `.ai-overlay/README.md`, creating tool links, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
 
 ## Repository References
 
@@ -73,6 +59,12 @@ The root repository tracks reproducible references, not copied implementation tr
 - Create these directories only when the project needs them.
 - Use `.ai` for shared canonical improvements only when the user explicitly requests that scope.
 
+## Optional SDD Tooling
+
+Configure SDD/planning tools only when the user explicitly requests a specific tool.
+
+Tool-specific rules, skills, commands, agents, templates, MCP assets, prompts, and overrides created for an optional SDD workflow must be registered under `.ai-overlay`, not under canonical `.ai`, unless the user explicitly asks to evolve the shared canonical context.
+
 ## Tool-Specific Overrides
 
 - Shared Codex-specific behavior must live in `.ai/codex/overrides`.
@@ -95,7 +87,3 @@ Use this format:
 The number is a global incremental sequence. Never edit an existing prompt file after it has been created. If a skill, rule, command, agent, template, or MCP changes, create a new prompt file documenting the change.
 
 The prompt registry is the audit trail of AI-driven project evolution.
-
-## OpenSpec Notes
-
-OpenSpec initialized the project-local `openspec/` structure. If tool-specific user-profile setup is blocked by environment permissions, keep the project-local OpenSpec artifacts and document the user-level setup command or permission that remains.

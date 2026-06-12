@@ -1,6 +1,6 @@
 ---
 name: setup-ai-environment
-description: Configure, initialize, review, and repair the project AI environment according to this repository's OpenSpec/SDD conventions. Use when Codex needs root AI setup: canonical .ai context, project-specific .ai-overlay, .codex/.claude/.agents links, docs and sources folders, AGENTS.md and .gitignore assertions, OpenSpec initialization, Git initialization, .ai reference registration or ignore configuration, and the root initial commit.
+description: Configure, initialize, review, and repair the project AI environment according to this repository's canonical AI conventions. Use when Codex needs root AI setup: canonical .ai context, project-specific .ai-overlay, .codex/.claude/.agents links, docs and sources folders, AGENTS.md and .gitignore assertions, Git initialization, .ai reference registration or ignore configuration, and the root initial commit.
 ---
 
 # Setup AI Environment
@@ -12,7 +12,7 @@ Use this skill to prepare a repository for the shared AI workflow used by this p
 When configuring or repairing the AI environment:
 
 1. Inspect the root before changing anything.
-2. Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `.ai-overlay/`, `openspec/`, `docs/`, `sources/`, and Git status.
+2. Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `.ai-overlay/`, `docs/`, `sources/`, and Git status.
 3. Treat `.ai` as canonical. Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
 4. For new projects, ensure the `.ai` context has already been cloned or downloaded into the project root before root initialization.
 5. Use `scripts/setup-ai-environment.mjs` when Node.js is available; it is the cross-platform setup path for Windows, Linux, and macOS.
@@ -35,12 +35,13 @@ Every setup decision must respect:
 - **Canonical AI Context**: `.ai` is the source of truth for shared AI assets.
 - **AI Overlay**: `.ai-overlay` is the versioned project-specific AI context overlay. It mirrors `.ai` conceptually but starts with only `README.md` and grows on demand.
 - **Tool Links, Not Copies**: `.codex`, `.claude`, and `.agents` must point to `.ai`.
-- **Root Workspace Ownership**: the root owns AI governance, OpenSpec, global documentation, source-module references, and root Git coordination.
+- **Root Workspace Ownership**: the root owns AI governance, global documentation, source-module references, and root Git coordination.
 - **Source Isolation**: source code belongs under `sources/`, not directly in the root.
 - **Documentation Separation**: global documentation belongs under `docs/`.
 - **Explicit Repository References**: use `.ai/rules/repository-submodule-references.md` for `.ai` and source-module reference decisions.
 - **Safe Existing Project Setup**: preserve existing project-specific guidance unless the user chooses replace or restructure.
 - **Project-Specific By Default**: create new project-specific rules, skills, commands, agents, templates, MCP assets, prompts, and overrides under `.ai-overlay` unless the user explicitly asks to change `.ai`.
+- **Optional SDD Tooling**: configure SDD/planning tools only when the user explicitly requests a specific tool; tool-specific assets from that setup belong under `.ai-overlay` unless the user explicitly asks to evolve canonical `.ai`.
 - **Prompt Registry Audit Trail**: structural canonical AI-context changes require a new immutable prompt registry entry.
 
 ## Quick Start
@@ -91,7 +92,6 @@ This skill owns:
 - Root directory and seed file creation.
 - Root tool links.
 - Project-specific AI overlay initialization.
-- OpenSpec initialization.
 - `.ai` reference registration or ignore configuration.
 - Root initial commit when the root repository has no commits.
 
@@ -101,7 +101,6 @@ The skill handles the rest of the project initialization:
 - Creates the expected root directories and seed files.
 - Creates `.ai-overlay/README.md` only, leaving the rest of the overlay structure to be created on demand.
 - Creates `.codex`, `.claude`, and `.agents` links to `.ai`.
-- Initializes OpenSpec when missing.
 - Registers `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
 - Ignores local-only `.ai` contexts in the root repository when `.ai` is copied manually or has no remote.
 - Creates the initial root commit when the root repository has no commits.
@@ -184,7 +183,7 @@ When a root file already exists, do not silently overwrite it. If it is missing 
 
 `AGENTS.md` must specify:
 
-- The project uses SDD with OpenSpec.
+- SDD/planning tools are optional and must be configured only when explicitly requested.
 - `.ai` is canonical.
 - `.ai-overlay` is the project-specific AI context overlay and is versioned with the root repository.
 - `.codex`, `.claude`, and `.agents` point to `.ai`.
@@ -200,17 +199,23 @@ When a root file already exists, do not silently overwrite it. If it is missing 
 .agents/
 ```
 
-## OpenSpec Rules
+## Optional SDD Tooling Rules
 
-OpenSpec must be initialized when its root structure is missing. Use:
+Do not install, initialize, or scaffold SDD/planning tooling during the standard setup flow.
 
-```bash
-openspec init --tools "codex,claude" .
+When the user explicitly asks to configure a specific SDD/planning tool, keep any generated or supporting AI assets project-specific:
+
+```text
+.ai-overlay/rules/
+.ai-overlay/skills/
+.ai-overlay/commands/
+.ai-overlay/agents/
+.ai-overlay/templates/
+.ai-overlay/mcp/
+.ai-overlay/prompts/registry/
 ```
 
-If the OpenSpec CLI is unavailable, stop and tell the user the command that must be installed or approved. Do not fake the OpenSpec structure when the CLI should own it.
-
-Keep `codex,claude` quoted in shells so the comma-separated tool list is passed as one value.
+Use canonical `.ai` for that tooling only when the user explicitly asks to evolve the shared context.
 
 ## Git Reference Rules
 
@@ -253,7 +258,6 @@ Before finishing, verify:
 - [ ] `sources/` exists at the repository root.
 - [ ] `AGENTS.md` exists and includes the required canonical assertions.
 - [ ] `.gitignore` includes `.codex/`, `.claude/`, and `.agents/`.
-- [ ] OpenSpec exists or the setup stopped with a clear CLI installation/approval message.
 - [ ] `.ai` reference handling follows `.ai/rules/repository-submodule-references.md`.
 - [ ] Root Git initialization and initial commit behavior followed the standard flow.
 - [ ] Existing project files were merged, replaced, or restructured only after the user chose that path.

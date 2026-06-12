@@ -2,7 +2,6 @@
 param(
     [string]$ProjectRoot = (Get-Location).Path,
     [string]$AiRepositoryUrl = "",
-    [string]$OpenSpecTools = "codex,claude",
     [string]$DefaultBranch = "main",
     [string]$InitialCommitMessage = "chore: initialize AI project environment",
     [switch]$RegisterLocalAiSubmodule,
@@ -197,27 +196,6 @@ function Ensure-AgentsFile {
     }
 }
 
-function Ensure-OpenSpec {
-    param([string]$Root)
-
-    $openSpecPath = Join-Path $Root "openspec"
-    if (Test-Path -LiteralPath $openSpecPath) {
-        Write-Step "OpenSpec structure already exists"
-        return
-    }
-
-    $command = Get-Command openspec -ErrorAction SilentlyContinue
-    if (-not $command) {
-        throw "OpenSpec is not available. Install or approve: npm install -g @fission-ai/openspec@latest"
-    }
-
-    Write-Step "Initializing OpenSpec"
-    & openspec init --tools $OpenSpecTools .
-    if ($LASTEXITCODE -ne 0) {
-        throw "openspec init failed with exit code $LASTEXITCODE"
-    }
-}
-
 function Ensure-AiReadme {
     param([string]$AiPath)
 
@@ -357,14 +335,13 @@ New-DirectoryLink (Join-Path $root ".codex") $aiRoot
 New-DirectoryLink (Join-Path $root ".claude") $aiRoot
 New-DirectoryLink (Join-Path $root ".agents") $aiRoot
 
-Ensure-OpenSpec $root
 $aiRegisteredAsSubmodule = Ensure-AiSubmodule $root
 
 if (-not $SkipInitialCommit) {
     $hasHead = Test-GitOk @("rev-parse", "--verify", "HEAD")
     if (-not $hasHead) {
         Write-Step "Creating root initial commit"
-        Run-Git @("add", "AGENTS.md", ".gitignore", ".ai-overlay", "docs", "sources", "openspec")
+        Run-Git @("add", "AGENTS.md", ".gitignore", ".ai-overlay", "docs", "sources")
         if (Test-Path -LiteralPath ".gitmodules") {
             Run-Git @("add", ".gitmodules")
         }

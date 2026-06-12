@@ -1,13 +1,13 @@
 ---
 name: dotnet-ai-repository-structure
-description: Deterministic orchestrator for AI-governed repository roots and .NET project roots. Use when creating, reviewing, or repairing repositories that use canonical AI context in `.ai`, project-specific AI context in `.ai-overlay`, root workspace folders such as `docs/` and `sources/`, OpenSpec/Git setup from `setup-ai-environment`, and .NET project structure from `dotnet-project-structure` under `sources/<dotnet-project>/`.
+description: Deterministic orchestrator for AI-governed repository roots and .NET project roots. Use when creating, reviewing, or repairing repositories that use canonical AI context in `.ai`, project-specific AI context in `.ai-overlay`, root workspace folders such as `docs/` and `sources/`, Git setup from `setup-ai-environment`, and .NET project structure from `dotnet-project-structure` under `sources/<dotnet-project>/`.
 ---
 
 # Dotnet AI Repository Structure
 
 Use this skill to connect two separate structures without mixing their scopes:
 
-- `setup-ai-environment` owns the repository root, canonical `.ai` context, project-specific `.ai-overlay`, tool links, OpenSpec, root Git setup, `docs/`, and `sources/`.
+- `setup-ai-environment` owns the repository root, canonical `.ai` context, project-specific `.ai-overlay`, tool links, root Git setup, `docs/`, and `sources/`.
 - `source-module-setup` owns source repository reference decisions under `sources/`, including local submodules and remote-backed submodules.
 - `dotnet-project-structure` owns the internal structure of a .NET project rooted at `sources/<dotnet-project>/`.
 - This skill owns the deterministic orchestration between the two.
@@ -38,7 +38,7 @@ Always coordinate with these skills:
 
 Conflict resolution:
 
-- Root workspace, `.ai`, `.ai-overlay`, `.codex`, `.claude`, `.agents`, OpenSpec, root `docs/`, root `sources/`, `.gitignore`, `.gitmodules`, and root Git rules follow `setup-ai-environment`.
+- Root workspace, `.ai`, `.ai-overlay`, `.codex`, `.claude`, `.agents`, root `docs/`, root `sources/`, `.gitignore`, `.gitmodules`, and root Git rules follow `setup-ai-environment`.
 - Source module Git reference behavior follows `source-module-setup` and `.ai/rules/repository-submodule-references.md`. Every source project must be registered as a root Git submodule.
 - .NET source layout, solution/project placement, tests, project docs, scripts, tools, deploy, and build folders follow `dotnet-project-structure`.
 - This skill decides which scope each action belongs to and prevents cross-scope writes.
@@ -92,7 +92,7 @@ Use the repository root for:
 - AI governance and canonical context.
 - Project-specific AI context in `.ai-overlay`, versioned with the root repository.
 - Shared skills, rules, commands, agents, templates, MCP assets, and prompt registry.
-- OpenSpec and SDD workflow assets.
+- Optional SDD/planning workflow assets under `.ai-overlay` when explicitly requested.
 - Cross-project documentation in `docs/`.
 - The `sources/` workspace for code projects.
 - Git submodule registration and root-level Git coordination.
@@ -167,7 +167,7 @@ When `sources/<dotnet-project>` is local-only:
 Use root `docs/` for:
 
 - Cross-project strategy.
-- OpenSpec and SDD notes.
+- Optional SDD/planning notes when explicitly requested for the root workspace.
 - AI workflow documentation.
 - Workspace organization.
 - Decisions that affect multiple projects.

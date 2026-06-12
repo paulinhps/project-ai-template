@@ -1,4 +1,4 @@
 interface:
   display_name: "Setup AI Environment"
   short_description: "Configures the project AI foundation"
-  default_prompt: "Use $setup-ai-environment to prepare the AI structure, links, OpenSpec, Git, and initial project commit."
+  default_prompt: "Use $setup-ai-environment to prepare the AI structure, links, Git, and initial project commit."

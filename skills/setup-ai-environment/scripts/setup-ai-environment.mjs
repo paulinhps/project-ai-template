@@ -13,7 +13,6 @@ const seedRoot = join(skillRoot, "assets", "seeds");
 const options = parseArgs(process.argv.slice(2));
 const projectRoot = resolve(options.projectRoot ?? process.cwd());
 const defaultBranch = options.defaultBranch ?? "main";
-const openSpecTools = options.openSpecTools ?? "codex,claude";
 const initialCommitMessage = options.initialCommitMessage ?? "chore: initialize AI project environment";
 const aiRepositoryUrl = options.aiRepositoryUrl ?? "";
 const registerLocalAiSubmodule = Boolean(options.registerLocalAiSubmodule);
@@ -83,14 +82,13 @@ newDirectoryLink(join(projectRoot, ".codex"), aiRoot);
 newDirectoryLink(join(projectRoot, ".claude"), aiRoot);
 newDirectoryLink(join(projectRoot, ".agents"), aiRoot);
 
-ensureOpenSpec(projectRoot);
 const aiRegisteredAsSubmodule = ensureAiSubmodule(projectRoot);
 
 if (!skipInitialCommit) {
   const hasHead = gitOk(["rev-parse", "--verify", "HEAD"]);
   if (!hasHead) {
     step("Creating root initial commit");
-    runGit(["add", "AGENTS.md", ".gitignore", ".ai-overlay", "docs", "sources", "openspec"]);
+    runGit(["add", "AGENTS.md", ".gitignore", ".ai-overlay", "docs", "sources"]);
     if (existsSync(".gitmodules")) runGit(["add", ".gitmodules"]);
     if (aiRegisteredAsSubmodule) runGit(["add", ".ai"]);
     runGit(["commit", "-m", initialCommitMessage]);
@@ -221,20 +219,6 @@ function ensureAgentsFile(path) {
       throw new Error(`AGENTS.md exists but is missing required assertion: ${snippet}. Choose merge, replace, or restructure before continuing.`);
     }
   }
-}
-
-function ensureOpenSpec(root) {
-  const openSpecPath = join(root, "openspec");
-  if (existsSync(openSpecPath)) {
-    step("OpenSpec structure already exists");
-    return;
-  }
-  const commandCheck = capture(process.platform === "win32" ? "where" : "which", ["openspec"], { stdio: "ignore" });
-  if (commandCheck.status !== 0) {
-    throw new Error("OpenSpec is not available. Install or approve: npm install -g @fission-ai/openspec@latest");
-  }
-  step("Initializing OpenSpec");
-  run("openspec", ["init", "--tools", openSpecTools, "."]);
 }
 
 function ensureAiSubmodule(root) {

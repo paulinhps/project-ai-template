@@ -13,15 +13,10 @@ Before using this structure to initialize a new project from zero, install or co
 - Git, available as `git` in the terminal.
 - Node.js 20 LTS or newer and npm, available as `node` and `npm`.
 - PowerShell 7 or Windows PowerShell only when using the Windows-specific `.ps1` setup path.
-- OpenSpec CLI:
-
-```bash
-npm install -g @fission-ai/openspec@latest
-```
-
 - At least one AI coding tool that can read repository instructions, such as Codex and/or Claude.
 - Optional: administrator privileges on Windows if you want symbolic links instead of directory junctions.
 - Optional: a remote Git repository for `.ai` when the AI context should be shared across multiple projects as a submodule.
+- Optional: project-specific SDD/planning tools, configured only when explicitly requested for a project.
 
 ### Tool Versions And Installation
 
@@ -29,15 +24,14 @@ npm install -g @fission-ai/openspec@latest
 | --- | --- | --- | --- | --- | --- |
 | Git | 2.28+ preferred | `winget install Git.Git` | Use the distro package manager | `brew install git` | `git init --initial-branch` needs modern Git; scripts fall back to `git branch -M main`. |
 | Node.js | 20 LTS+ | `winget install OpenJS.NodeJS.LTS` | Use NodeSource, `nvm`, or the distro package manager | `brew install node@20` or `nvm install 20` | Required for the cross-platform setup script. |
-| npm | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Required to install OpenSpec. |
-| OpenSpec CLI | Latest stable | `npm install -g @fission-ai/openspec@latest` | Same command | Same command | Required for propose, apply, sync, and archive workflows. |
+| npm | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Required by Node-based setup scripts and optional project tooling. |
 | PowerShell | 7+ preferred | Built-in Windows PowerShell works for the `.ps1` path; PowerShell 7 recommended | Install `powershell` only if using `.ps1` scripts | Install `powershell` only if using `.ps1` scripts | Optional when using the Node setup script. |
 
 ## Start a New Project from Zero
 
 Use this sequence when creating a new repository that should adopt the shared AI structure.
 
-The project initialization decision is: first place the shared `.ai` content in the project root, then ask an AI agent to execute the configuration skill. The skill owns root repository initialization, root files and directories, `.ai` reference registration, OpenSpec initialization, and the initial root commit.
+The project initialization decision is: first place the shared `.ai` content in the project root, then ask an AI agent to execute the configuration skill. The skill owns root repository initialization, root files and directories, `.ai` reference registration, and the initial root commit.
 
 1. Create or open the empty project directory. Do not run `git init` in the root manually.
 
@@ -77,7 +71,6 @@ The skill is responsible for these root initialization tasks:
 - Initialize the root Git repository when it does not exist.
 - Create root directories and seed files such as `docs/`, `sources/`, `.ai-overlay/README.md`, `AGENTS.md`, and `.gitignore`.
 - Create `.codex`, `.claude`, and `.agents` links to `.ai`.
-- Initialize OpenSpec when `openspec/` is missing.
 - Register `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
 - Ignore local-only `.ai` contexts in the root repository when `.ai` is copied manually or has no remote.
 - Create the initial root commit when the root repository has no commits.
@@ -94,15 +87,7 @@ Windows PowerShell equivalent:
 .\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1
 ```
 
-5. Initialize OpenSpec manually only if the setup script could not run it.
-
-```bash
-openspec init --tools "codex,claude" .
-```
-
-Keep `codex,claude` quoted in shells so the comma-separated tool list is passed as one value.
-
-6. Confirm the expected root shape.
+5. Confirm the expected root shape.
 
 ```text
 AGENTS.md
@@ -115,11 +100,10 @@ AGENTS.md
 .claude/     -> .ai
 .agents/     -> .ai
 docs/
-openspec/
 sources/
 ```
 
-7. Review the initialized project.
+6. Review the initialized project.
 
 ```bash
 git status
@@ -144,7 +128,7 @@ Treat `.ai` as the project memory and operating system for AI-assisted work.
 
 1. Start every AI session by reading `AGENTS.md` from the project root.
 2. Use `.ai/rules/` for shared rules that every agent must follow.
-3. Use `.ai/skills/` for repeatable workflows, especially OpenSpec propose, apply, sync, archive, and project setup tasks.
+3. Use `.ai/skills/` for repeatable shared workflows and project setup tasks.
 4. Use `.ai/commands/` for command definitions and slash-command assets that should be available across tools.
 5. Use `.ai/agents/` for reusable agent definitions.
 6. Use `.ai/templates/` for reusable specification, prompt, documentation, and workflow templates.
@@ -154,6 +138,12 @@ Treat `.ai` as the project memory and operating system for AI-assisted work.
 10. Put project-specific AI assets in `.ai-overlay` unless the user explicitly asks to evolve the canonical `.ai` context.
 11. Put shared behavior in shared folders first. Use `.ai/codex/overrides/` or `.ai/claude/overrides/` only for genuine shared tool-specific behavior.
 12. Never create independent `.codex`, `.claude`, or `.agents` directory trees. Those paths must remain links to the canonical `.ai` assets.
+
+## Optional SDD Tooling
+
+SDD and planning tools are project opt-ins, not part of the canonical setup path. Configure a specific tool only when the user explicitly asks for it.
+
+When optional SDD tooling creates or requires rules, skills, commands, agents, templates, MCP assets, prompts, or overrides, register those assets under `.ai-overlay` so they stay project-specific. Use canonical `.ai` only when the user explicitly asks to evolve the shared context itself.
 
 ## Shared Folders
 
