@@ -75,6 +75,11 @@ Depending on what the user brings, you might:
 
 ---
 
+## Portable Tool Fallbacks
+
+- If slash commands are not supported, treat this file as a named workflow and enter the same exploration stance from normal chat.
+- If the current tool cannot inspect files or run `openspec`, continue conversationally and state which context could not be loaded.
+
 ## OpenSpec Awareness
 
 You have full context of the OpenSpec system. Use it naturally, don't force it.

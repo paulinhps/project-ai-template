@@ -18,6 +18,11 @@ Enter explore mode. Think deeply. Visualize freely. Follow the conversation wher
 - A comparison: "postgres vs sqlite for this"
 - Nothing (just enter explore mode)
 
+**Portable Tool Fallbacks**
+
+- If slash commands are not supported, treat this file as a named workflow and enter the same exploration stance from normal chat.
+- If the current tool cannot inspect files or run `openspec`, continue conversationally and state which context could not be loaded.
+
 ---
 
 ## The Stance

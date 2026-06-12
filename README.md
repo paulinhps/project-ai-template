@@ -11,17 +11,27 @@ Root `.codex`, `.claude`, and `.agents` paths should point to `.ai`, so changes 
 Before using this structure to initialize a new project from zero, install or confirm these tools:
 
 - Git, available as `git` in the terminal.
-- Node.js and npm, available as `node` and `npm`.
-- PowerShell 7 or Windows PowerShell with script execution allowed for local project scripts.
+- Node.js 20 LTS or newer and npm, available as `node` and `npm`.
+- PowerShell 7 or Windows PowerShell only when using the Windows-specific `.ps1` setup path.
 - OpenSpec CLI:
 
-```powershell
+```bash
 npm install -g @fission-ai/openspec@latest
 ```
 
 - At least one AI coding tool that can read repository instructions, such as Codex and/or Claude.
 - Optional: administrator privileges on Windows if you want symbolic links instead of directory junctions.
 - Optional: a remote Git repository for `.ai` when the AI context should be shared across multiple projects as a submodule.
+
+### Tool Versions And Installation
+
+| Tool | Minimum | Windows | Linux | macOS | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Git | 2.28+ preferred | `winget install Git.Git` | Use the distro package manager | `brew install git` | `git init --initial-branch` needs modern Git; scripts fall back to `git branch -M main`. |
+| Node.js | 20 LTS+ | `winget install OpenJS.NodeJS.LTS` | Use NodeSource, `nvm`, or the distro package manager | `brew install node@20` or `nvm install 20` | Required for the cross-platform setup script. |
+| npm | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Required to install OpenSpec. |
+| OpenSpec CLI | Latest stable | `npm install -g @fission-ai/openspec@latest` | Same command | Same command | Required for propose, apply, sync, and archive workflows. |
+| PowerShell | 7+ preferred | Built-in Windows PowerShell works for the `.ps1` path; PowerShell 7 recommended | Install `powershell` only if using `.ps1` scripts | Install `powershell` only if using `.ps1` scripts | Optional when using the Node setup script. |
 
 ## Start a New Project from Zero
 
@@ -31,7 +41,7 @@ The project initialization decision is: first place the shared `.ai` content in 
 
 1. Create or open the empty project directory. Do not run `git init` in the root manually.
 
-```powershell
+```bash
 mkdir my-project
 cd my-project
 ```
@@ -40,11 +50,17 @@ cd my-project
 
 Use the shared AI repository when one exists:
 
-```powershell
+```bash
 git clone <AI_REPOSITORY_URL> .ai
 ```
 
 For a local bootstrap, copy the prepared `.ai` directory into the project root:
+
+```bash
+cp -R <AI_CONTEXT_SOURCE> .ai
+```
+
+Windows PowerShell equivalent:
 
 ```powershell
 Copy-Item -Recurse <AI_CONTEXT_SOURCE> .ai
@@ -53,7 +69,7 @@ Copy-Item -Recurse <AI_CONTEXT_SOURCE> .ai
 3. Execute this prompt from the project root:
 
 ```text
-initialize project using .ai\skills\setup-ai-environment\SKILL.md skill
+initialize project using .ai/skills/setup-ai-environment/SKILL.md skill
 ```
 
 The skill is responsible for these root initialization tasks:
@@ -66,15 +82,27 @@ The skill is responsible for these root initialization tasks:
 - Ignore local-only `.ai` contexts in the root repository when `.ai` is copied manually or has no remote.
 - Create the initial root commit when the root repository has no commits.
 
-4. Initialize OpenSpec manually only if the setup script could not run it.
+4. Run the cross-platform setup script when executing the skill manually.
+
+```bash
+node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs
+```
+
+Windows PowerShell equivalent:
 
 ```powershell
+.\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1
+```
+
+5. Initialize OpenSpec manually only if the setup script could not run it.
+
+```bash
 openspec init --tools "codex,claude" .
 ```
 
-Keep `codex,claude` quoted in PowerShell so the comma-separated tool list is passed as one value.
+Keep `codex,claude` quoted in shells so the comma-separated tool list is passed as one value.
 
-5. Confirm the expected root shape.
+6. Confirm the expected root shape.
 
 ```text
 AGENTS.md
@@ -91,9 +119,9 @@ openspec/
 sources/
 ```
 
-6. Review the initialized project.
+7. Review the initialized project.
 
-```powershell
+```bash
 git status
 ```
 

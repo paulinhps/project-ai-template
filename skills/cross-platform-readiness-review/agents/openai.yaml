@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cross Platform Readiness Review"
+  short_description: "Audits AI assets for OS portability"
+  default_prompt: "Use $cross-platform-readiness-review to audit the repository AI context for Windows, Linux, and macOS readiness and produce a prioritized remediation plan."

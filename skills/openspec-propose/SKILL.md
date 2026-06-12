@@ -22,6 +22,12 @@ When ready to implement, run /opsx:apply
 
 **Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build.
 
+**Portable Tool Fallbacks**
+
+- If the current tool does not provide `AskUserQuestion`, ask the user directly in plain text and wait for the reply.
+- If the current tool does not provide `TodoWrite`, keep a short markdown checklist in the response while working.
+- If slash commands are not supported, treat this file as a named workflow and run the same steps from normal chat.
+
 **Steps**
 
 1. **If no clear input provided, ask what they want to build**

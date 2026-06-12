@@ -13,6 +13,12 @@ Archive a completed change in the experimental workflow.
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+**Portable Tool Fallbacks**
+
+- If the current tool does not provide `AskUserQuestion`, ask the user directly in plain text and wait for the reply.
+- If the current tool does not provide `Task` or `Skill` tools, perform the sync assessment inline or ask the user to run `openspec-sync-specs` separately.
+- If slash commands are not supported, treat this file as a named workflow and run the same steps from normal chat.
+
 **Steps**
 
 1. **If no change name provided, prompt for selection**
@@ -66,7 +72,7 @@ Archive a completed change in the experimental workflow.
    - If changes needed: "Sync now (recommended)", "Archive without syncing"
    - If already synced: "Archive now", "Sync anyway", "Cancel"
 
-   If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
+   If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). If Task or Skill tools are unavailable, run the sync workflow inline using `.ai/skills/openspec-sync-specs/SKILL.md` as guidance. Proceed to archive regardless of choice.
 
 5. **Perform the archive**
 
@@ -113,5 +119,5 @@ All artifacts complete. All tasks complete.
 - Don't block archive on warnings - just inform and confirm
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
 - Show clear summary of what happened
-- If sync is requested, use openspec-sync-specs approach (agent-driven)
+- If sync is requested, use openspec-sync-specs approach when available; otherwise run the sync workflow inline from `.ai/skills/openspec-sync-specs/SKILL.md`
 - If delta specs exist, always run the sync assessment and show the combined summary before prompting

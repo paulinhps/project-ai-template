@@ -9,6 +9,12 @@ Implement tasks from an OpenSpec change.
 
 **Input**: Optionally specify a change name (e.g., `/opsx:apply add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+**Portable Tool Fallbacks**
+
+- If the current tool does not provide `AskUserQuestion`, ask the user directly in plain text and wait for the reply.
+- If slash commands are not supported, treat this file as a named workflow and run the same steps from normal chat.
+- If the current tool cannot edit files, stop after reporting the planned changes and required files.
+
 **Steps**
 
 1. **Select the change**

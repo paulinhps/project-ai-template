@@ -15,15 +15,16 @@ When configuring or repairing the AI environment:
 2. Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `.ai-overlay/`, `openspec/`, `docs/`, `sources/`, and Git status.
 3. Treat `.ai` as canonical. Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
 4. For new projects, ensure the `.ai` context has already been cloned or downloaded into the project root before root initialization.
-5. Use `scripts/setup-ai-environment.ps1` when possible.
-6. If the script cannot be used, follow its behavior manually and keep the same safety checks.
-7. Use `assets/seeds/AGENTS.md`, `assets/seeds/.gitignore`, and `assets/seeds/AI_OVERLAY_README.md` as the source templates for new projects.
-8. When root files already exist, compare them against the required assertions before changing anything.
-9. If an existing `AGENTS.md`, `.gitignore`, README, documentation structure, or source layout conflicts with the canonical structure, stop and ask for one of these decisions:
+5. Use `scripts/setup-ai-environment.mjs` when Node.js is available; it is the cross-platform setup path for Windows, Linux, and macOS.
+6. On Windows, `scripts/setup-ai-environment.ps1` remains a supported PowerShell equivalent.
+7. If neither script can be used, follow the script behavior manually and keep the same safety checks.
+8. Use `assets/seeds/AGENTS.md`, `assets/seeds/.gitignore`, and `assets/seeds/AI_OVERLAY_README.md` as the source templates for new projects.
+9. When root files already exist, compare them against the required assertions before changing anything.
+10. If an existing `AGENTS.md`, `.gitignore`, README, documentation structure, or source layout conflicts with the canonical structure, stop and ask for one of these decisions:
    - Merge: preserve project-specific content and add missing canonical context.
    - Replace: overwrite the conflicting file or structure with the canonical seed.
    - Restructure: move documentation and source code into the expected `docs/` and `sources/` locations before continuing.
-10. After changing any shared skill, rule, command, agent, template, MCP asset, setup convention, or seed file, create the next immutable prompt registry file under `.ai/prompts/registry`.
+11. After changing any shared skill, rule, command, agent, template, MCP asset, setup convention, or seed file, create the next immutable prompt registry file under `.ai/prompts/registry`.
 
 Do not tell the user to run `git init`, `git submodule add`, or the initial root commit manually before this skill in the standard flow.
 
@@ -46,7 +47,7 @@ Every setup decision must respect:
 
 From a new empty project root, place the shared `.ai` context first:
 
-```powershell
+```bash
 git clone <AI_REPOSITORY_URL> .ai
 ```
 
@@ -55,16 +56,28 @@ If the shared context is distributed as a download instead of a Git repository, 
 Then ask an AI agent to execute this prompt from the project root:
 
 ```text
-initialize project using .ai\skills\setup-ai-environment\SKILL.md skill
+initialize project using .ai/skills/setup-ai-environment/SKILL.md skill
 ```
 
 The default Git branch for newly initialized repositories is `main`. Override it only when a project has a documented reason:
+
+```bash
+node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs --default-branch main
+```
+
+Windows PowerShell equivalent:
 
 ```powershell
 .\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1 -DefaultBranch "main"
 ```
 
 When `.ai` is not already present and must be added from a real remote repository during setup, pass the repository URL:
+
+```bash
+node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs --ai-repository-url "https://example.com/org/project-ai.git"
+```
+
+Windows PowerShell equivalent:
 
 ```powershell
 .\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1 -AiRepositoryUrl "https://example.com/org/project-ai.git"
@@ -191,17 +204,17 @@ When a root file already exists, do not silently overwrite it. If it is missing 
 
 OpenSpec must be initialized when its root structure is missing. Use:
 
-```powershell
+```bash
 openspec init --tools "codex,claude" .
 ```
 
 If the OpenSpec CLI is unavailable, stop and tell the user the command that must be installed or approved. Do not fake the OpenSpec structure when the CLI should own it.
 
-Keep `codex,claude` quoted in PowerShell so the comma-separated tool list is passed as one value.
+Keep `codex,claude` quoted in shells so the comma-separated tool list is passed as one value.
 
 ## Git Reference Rules
 
-The standard new-project flow is to clone or download `.ai` first, then ask an AI agent to execute this skill. If the root is not a Git repository, the skill initializes it with `git init --initial-branch=main`, usually by running `scripts/setup-ai-environment.ps1`. The setup script defaults to `main` through the `-DefaultBranch` parameter and falls back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
+The standard new-project flow is to clone or download `.ai` first, then ask an AI agent to execute this skill. If the root is not a Git repository, the skill initializes it with `git init --initial-branch=main`, usually by running `scripts/setup-ai-environment.mjs`. The setup scripts default to `main` through the `--default-branch` or `-DefaultBranch` parameter and fall back to `git branch -M main` when the installed Git version does not support `--initial-branch`.
 
 Use `.ai/rules/repository-submodule-references.md` for reference decisions.
 
@@ -209,13 +222,13 @@ If `.ai` is copied or downloaded without Git metadata, do not register it as a s
 
 If `.ai` is a Git repository without `origin`, do not register it as a submodule automatically. Add `.ai/` to the root `.gitignore` and report `remote origin pending`.
 
-If the project owner explicitly chooses local `.ai` submodule mode, run the setup script with `-RegisterLocalAiSubmodule` and use `./.ai` as the local bootstrap URL.
+If the project owner explicitly chooses local `.ai` submodule mode, run the setup script with `--register-local-ai-submodule` or `-RegisterLocalAiSubmodule` and use `./.ai` as the local bootstrap URL.
 
 If `.ai` has `origin`, or if `-AiRepositoryUrl` is provided, register it from the root as the `.ai` submodule/gitlink and write the remote URL to `.gitmodules`. Do not use `./.ai` as the final submodule URL for reusable projects.
 
 If `.ai` does not exist and `-AiRepositoryUrl` is provided, add it with:
 
-```powershell
+```bash
 git submodule add <AiRepositoryUrl> .ai
 ```
 
