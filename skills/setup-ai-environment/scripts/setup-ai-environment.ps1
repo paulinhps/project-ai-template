@@ -182,7 +182,9 @@ function Ensure-AgentsFile {
 
     $required = @(
         '`.ai` is the canonical AI context directory.',
+        '`.ai-overlay` is the project-specific AI context directory.',
         '`.codex`, `.claude`, and `.agents` point to `.ai`.',
+        'Project-specific AI assets must live in `.ai-overlay` unless the user explicitly asks to change `.ai`.',
         'Shared agents must live in `.ai/agents`.',
         'Prompt source files are immutable and versioned under `.ai/prompts/registry`.'
     )
@@ -340,6 +342,10 @@ foreach ($dir in $rootDirs) {
     Ensure-Directory (Join-Path $root $dir)
 }
 
+$aiOverlayRoot = Join-Path $root ".ai-overlay"
+Ensure-Directory $aiOverlayRoot
+Copy-SeedIfMissing "AI_OVERLAY_README.md" (Join-Path $aiOverlayRoot "README.md")
+
 $gitIgnorePath = Join-Path $root ".gitignore"
 Ensure-AgentsFile (Join-Path $root "AGENTS.md")
 Copy-SeedIfMissing ".gitignore" $gitIgnorePath
@@ -358,7 +364,7 @@ if (-not $SkipInitialCommit) {
     $hasHead = Test-GitOk @("rev-parse", "--verify", "HEAD")
     if (-not $hasHead) {
         Write-Step "Creating root initial commit"
-        Run-Git @("add", "AGENTS.md", ".gitignore", "docs", "sources", "openspec")
+        Run-Git @("add", "AGENTS.md", ".gitignore", ".ai-overlay", "docs", "sources", "openspec")
         if (Test-Path -LiteralPath ".gitmodules") {
             Run-Git @("add", ".gitmodules")
         }

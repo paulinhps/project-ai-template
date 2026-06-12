@@ -1,6 +1,6 @@
 ---
 name: setup-ai-environment
-description: Configure, initialize, review, and repair the project AI environment according to this repository's OpenSpec/SDD conventions. Use when Codex needs root AI setup: canonical .ai context, .codex/.claude/.agents links, docs and sources folders, AGENTS.md and .gitignore assertions, OpenSpec initialization, Git initialization, .ai reference registration or ignore configuration, and the root initial commit.
+description: Configure, initialize, review, and repair the project AI environment according to this repository's OpenSpec/SDD conventions. Use when Codex needs root AI setup: canonical .ai context, project-specific .ai-overlay, .codex/.claude/.agents links, docs and sources folders, AGENTS.md and .gitignore assertions, OpenSpec initialization, Git initialization, .ai reference registration or ignore configuration, and the root initial commit.
 ---
 
 # Setup AI Environment
@@ -12,12 +12,12 @@ Use this skill to prepare a repository for the shared AI workflow used by this p
 When configuring or repairing the AI environment:
 
 1. Inspect the root before changing anything.
-2. Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `openspec/`, `docs/`, `sources/`, and Git status.
+2. Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `.ai-overlay/`, `openspec/`, `docs/`, `sources/`, and Git status.
 3. Treat `.ai` as canonical. Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
 4. For new projects, ensure the `.ai` context has already been cloned or downloaded into the project root before root initialization.
 5. Use `scripts/setup-ai-environment.ps1` when possible.
 6. If the script cannot be used, follow its behavior manually and keep the same safety checks.
-7. Use `assets/seeds/AGENTS.md` and `assets/seeds/.gitignore` as the source templates for new projects.
+7. Use `assets/seeds/AGENTS.md`, `assets/seeds/.gitignore`, and `assets/seeds/AI_OVERLAY_README.md` as the source templates for new projects.
 8. When root files already exist, compare them against the required assertions before changing anything.
 9. If an existing `AGENTS.md`, `.gitignore`, README, documentation structure, or source layout conflicts with the canonical structure, stop and ask for one of these decisions:
    - Merge: preserve project-specific content and add missing canonical context.
@@ -32,13 +32,15 @@ Do not tell the user to run `git init`, `git submodule add`, or the initial root
 Every setup decision must respect:
 
 - **Canonical AI Context**: `.ai` is the source of truth for shared AI assets.
+- **AI Overlay**: `.ai-overlay` is the versioned project-specific AI context overlay. It mirrors `.ai` conceptually but starts with only `README.md` and grows on demand.
 - **Tool Links, Not Copies**: `.codex`, `.claude`, and `.agents` must point to `.ai`.
 - **Root Workspace Ownership**: the root owns AI governance, OpenSpec, global documentation, source-module references, and root Git coordination.
 - **Source Isolation**: source code belongs under `sources/`, not directly in the root.
 - **Documentation Separation**: global documentation belongs under `docs/`.
 - **Explicit Repository References**: use `.ai/rules/repository-submodule-references.md` for `.ai` and source-module reference decisions.
 - **Safe Existing Project Setup**: preserve existing project-specific guidance unless the user chooses replace or restructure.
-- **Prompt Registry Audit Trail**: structural AI-context changes require a new immutable prompt registry entry.
+- **Project-Specific By Default**: create new project-specific rules, skills, commands, agents, templates, MCP assets, prompts, and overrides under `.ai-overlay` unless the user explicitly asks to change `.ai`.
+- **Prompt Registry Audit Trail**: structural canonical AI-context changes require a new immutable prompt registry entry.
 
 ## Quick Start
 
@@ -75,6 +77,7 @@ This skill owns:
 - Root Git initialization when missing.
 - Root directory and seed file creation.
 - Root tool links.
+- Project-specific AI overlay initialization.
 - OpenSpec initialization.
 - `.ai` reference registration or ignore configuration.
 - Root initial commit when the root repository has no commits.
@@ -83,6 +86,7 @@ The skill handles the rest of the project initialization:
 
 - Initializes the root Git repository when missing.
 - Creates the expected root directories and seed files.
+- Creates `.ai-overlay/README.md` only, leaving the rest of the overlay structure to be created on demand.
 - Creates `.codex`, `.claude`, and `.agents` links to `.ai`.
 - Initializes OpenSpec when missing.
 - Registers `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
@@ -105,6 +109,23 @@ docs/
   requirements/
   specs/
 sources/
+.ai-overlay/
+  README.md
+```
+
+`.ai-overlay` may later mirror the `.ai` structure, but setup must not create the full tree before it is needed:
+
+```text
+.ai-overlay/
+  agents/
+  claude/overrides/
+  codex/overrides/
+  commands/
+  mcp/
+  prompts/registry/
+  rules/
+  skills/
+  templates/
 ```
 
 Ensure `.ai` contains the shared AI structure:
@@ -137,6 +158,7 @@ Seed files live in:
 ```text
 assets/seeds/AGENTS.md
 assets/seeds/.gitignore
+assets/seeds/AI_OVERLAY_README.md
 ```
 
 When setting up a new project, recreate missing root files from those seeds before applying assertions. When a structural rule changes and impacts future projects, update the relevant seed in this skill.
@@ -151,8 +173,10 @@ When a root file already exists, do not silently overwrite it. If it is missing 
 
 - The project uses SDD with OpenSpec.
 - `.ai` is canonical.
+- `.ai-overlay` is the project-specific AI context overlay and is versioned with the root repository.
 - `.codex`, `.claude`, and `.agents` point to `.ai`.
 - Shared rules, skills, commands, agents, templates, and MCP assets live under `.ai`.
+- Project-specific rules, skills, commands, agents, templates, and MCP assets live under `.ai-overlay` unless the user explicitly asks to change `.ai`.
 - Prompt registry files are immutable and incrementally numbered.
 
 `.gitignore` must include the root link paths so Git does not traverse them:
@@ -208,6 +232,7 @@ Before committing, inspect status and avoid staging unrelated user work in estab
 Before finishing, verify:
 
 - [ ] `.ai` exists at the repository root.
+- [ ] `.ai-overlay/README.md` exists and is versioned by the root repository.
 - [ ] `.codex` points to `.ai`.
 - [ ] `.claude` points to `.ai`.
 - [ ] `.agents` points to `.ai`.

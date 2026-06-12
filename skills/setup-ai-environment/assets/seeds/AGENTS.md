@@ -20,6 +20,12 @@ The unquoted PowerShell form split the comma-separated tool list, so the success
 
 `.ai` is the canonical AI context directory.
 
+`.ai-overlay` is the project-specific AI context directory. It is versioned with the root repository, mirrors the `.ai` structure conceptually, and starts with only `README.md`. Create its folders only when project-specific context is needed.
+
+Project-specific AI assets must live in `.ai-overlay` unless the user explicitly asks to change `.ai`.
+
+Agents should load `.ai` first, then `.ai-overlay` as the project-specific overlay.
+
 `.codex`, `.claude`, and `.agents` point to `.ai`. The requested symbolic links required administrator privileges in this Windows environment, so directory junctions were used as the non-duplicating fallback. Changes made through `.ai`, `.codex`, `.claude`, or `.agents` affect the same underlying files.
 
 Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
@@ -34,7 +40,7 @@ New projects must start by cloning or downloading the shared `.ai` context into 
 initialize project using .ai\skills\setup-ai-environment\SKILL.md skill
 ```
 
-The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating tool links, initializing OpenSpec, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
+The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating `.ai-overlay/README.md`, creating tool links, initializing OpenSpec, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
 
 ## Repository References
 
@@ -56,10 +62,23 @@ The root repository tracks reproducible references, not copied implementation tr
 - Shared templates must live in `.ai/templates`.
 - MCP-related assets must live in `.ai/mcp`.
 
+## Project Assets
+
+- Project-specific rules must live in `.ai-overlay/rules`.
+- Project-specific skills must live in `.ai-overlay/skills`.
+- Project-specific commands must live in `.ai-overlay/commands`.
+- Project-specific agents must live in `.ai-overlay/agents`.
+- Project-specific templates must live in `.ai-overlay/templates`.
+- Project-specific MCP assets must live in `.ai-overlay/mcp`.
+- Create these directories only when the project needs them.
+- Use `.ai` for shared canonical improvements only when the user explicitly requests that scope.
+
 ## Tool-Specific Overrides
 
-- Codex-specific behavior must live in `.ai/codex/overrides`.
-- Claude-specific behavior must live in `.ai/claude/overrides`.
+- Shared Codex-specific behavior must live in `.ai/codex/overrides`.
+- Shared Claude-specific behavior must live in `.ai/claude/overrides`.
+- Project-specific Codex behavior must live in `.ai-overlay/codex/overrides`.
+- Project-specific Claude behavior must live in `.ai-overlay/claude/overrides`.
 
 Use overrides only for genuine tool-specific behavior. Shared instructions should stay in the shared folders.
 

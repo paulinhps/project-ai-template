@@ -1,31 +1,32 @@
 ---
 name: dotnet-ai-repository-structure
-description: Deterministic orchestrator for AI-governed repository roots and .NET project roots. Use when creating, reviewing, or repairing repositories that use canonical AI context in `.ai`, root workspace folders such as `docs/` and `sources/`, OpenSpec/Git setup from `setup-ai-environment`, and .NET project structure from `dotnet-project-structure` under `sources/<dotnet-project>/`.
+description: Deterministic orchestrator for AI-governed repository roots and .NET project roots. Use when creating, reviewing, or repairing repositories that use canonical AI context in `.ai`, project-specific AI context in `.ai-overlay`, root workspace folders such as `docs/` and `sources/`, OpenSpec/Git setup from `setup-ai-environment`, and .NET project structure from `dotnet-project-structure` under `sources/<dotnet-project>/`.
 ---
 
 # Dotnet AI Repository Structure
 
 Use this skill to connect two separate structures without mixing their scopes:
 
-- `setup-ai-environment` owns the repository root, canonical `.ai` context, tool links, OpenSpec, root Git setup, `docs/`, and `sources/`.
+- `setup-ai-environment` owns the repository root, canonical `.ai` context, project-specific `.ai-overlay`, tool links, OpenSpec, root Git setup, `docs/`, and `sources/`.
 - `source-module-setup` owns source repository reference decisions under `sources/`, including local submodules and remote-backed submodules.
 - `dotnet-project-structure` owns the internal structure of a .NET project rooted at `sources/<dotnet-project>/`.
 - This skill owns the deterministic orchestration between the two.
 
 ## Core Rule
 
-Keep `.ai` exclusively at the repository root. Do not create AI context directories inside .NET projects unless the user explicitly asks for a separate AI-governed repository there.
+Keep `.ai` and `.ai-overlay` exclusively at the repository root. Do not create AI context directories inside .NET projects unless the user explicitly asks for a separate AI-governed repository there.
 
 Never create these paths during the normal flow:
 
 ```text
 sources/<dotnet-project>/.ai/
+sources/<dotnet-project>/.ai-overlay/
 sources/<dotnet-project>/.codex/
 sources/<dotnet-project>/.claude/
 sources/<dotnet-project>/.agents/
 ```
 
-When the root contains `.ai` and `sources/`, treat the root as the AI workspace and `sources/<project-name>` as the real code project root.
+When the root contains `.ai`, `.ai-overlay`, and `sources/`, treat the root as the AI workspace and `sources/<project-name>` as the real code project root.
 
 ## Required Dependencies
 
@@ -37,7 +38,7 @@ Always coordinate with these skills:
 
 Conflict resolution:
 
-- Root workspace, `.ai`, `.codex`, `.claude`, `.agents`, OpenSpec, root `docs/`, root `sources/`, `.gitignore`, `.gitmodules`, and root Git rules follow `setup-ai-environment`.
+- Root workspace, `.ai`, `.ai-overlay`, `.codex`, `.claude`, `.agents`, OpenSpec, root `docs/`, root `sources/`, `.gitignore`, `.gitmodules`, and root Git rules follow `setup-ai-environment`.
 - Source module Git reference behavior follows `source-module-setup` and `.ai/rules/repository-submodule-references.md`. Every source project must be registered as a root Git submodule.
 - .NET source layout, solution/project placement, tests, project docs, scripts, tools, deploy, and build folders follow `dotnet-project-structure`.
 - This skill decides which scope each action belongs to and prevents cross-scope writes.
@@ -47,6 +48,8 @@ Conflict resolution:
 ```text
 <repository-root>/
   .ai/
+  .ai-overlay/
+    README.md
   .codex -> .ai
   .claude -> .ai
   .agents -> .ai
@@ -87,6 +90,7 @@ sources/<dotnet-project>/
 Use the repository root for:
 
 - AI governance and canonical context.
+- Project-specific AI context in `.ai-overlay`, versioned with the root repository.
 - Shared skills, rules, commands, agents, templates, MCP assets, and prompt registry.
 - OpenSpec and SDD workflow assets.
 - Cross-project documentation in `docs/`.
@@ -112,7 +116,7 @@ Do not apply `setup-ai-environment` inside `sources/<dotnet-project>/`.
 Follow this order for a new AI-governed .NET repository:
 
 1. Prepare or repair the repository root with `setup-ai-environment`.
-2. Verify the root has `.ai/`, `.codex`, `.claude`, `.agents`, `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
+2. Verify the root has `.ai/`, `.ai-overlay/README.md`, `.codex`, `.claude`, `.agents`, `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
 3. Decide whether the .NET project is new local source or an existing remote repository.
 4. Create or register the project at `sources/<dotnet-project>/`.
 5. If the project already has its own repository and remote `origin`, register it as a Git submodule using the remote URL instead of copying its source into the root repository.
@@ -126,7 +130,7 @@ Follow this order for a new AI-governed .NET repository:
 When reviewing an existing repository:
 
 1. Identify the actual repository root.
-2. Verify whether `.ai` exists only at that root.
+2. Verify whether `.ai` and `.ai-overlay` exist only at that root.
 3. Verify `.codex`, `.claude`, and `.agents` point to `.ai`.
 4. Verify `sources/` exists at the root.
 5. Map projects inside `sources/`.
@@ -185,22 +189,25 @@ Before creating or moving a directory, answer:
 2. Is this content AI governance or source/project content?
 3. Should the .NET project use a remote-backed submodule URL or a local submodule URL?
 4. Does `.ai` already exist at the repository root?
-5. Does root `sources/` already exist?
-6. Is the .NET project being created under `sources/<dotnet-project>/`?
-7. Is the right dependency skill being applied in the right scope?
-8. Is there any risk of duplicating AI context inside the .NET project?
+5. Does `.ai-overlay/README.md` exist at the repository root?
+6. Does root `sources/` already exist?
+7. Is the .NET project being created under `sources/<dotnet-project>/`?
+8. Is the right dependency skill being applied in the right scope?
+9. Is there any risk of duplicating AI context inside the .NET project?
 
 ## Validation Checklist
 
 Before finishing, verify:
 
 - [ ] `.ai` exists only at the repository root.
+- [ ] `.ai-overlay` exists only at the repository root and contains at least `README.md`.
 - [ ] `.codex` points to `.ai`.
 - [ ] `.claude` points to `.ai`.
 - [ ] `.agents` points to `.ai`.
 - [ ] `sources/` exists at the repository root.
 - [ ] The .NET project is under `sources/<dotnet-project>/`.
 - [ ] The .NET project does not contain `.ai`.
+- [ ] The .NET project does not contain `.ai-overlay`.
 - [ ] The .NET project does not contain `.codex`, `.claude`, or `.agents`.
 - [ ] The .NET project follows `dotnet-project-structure`.
 - [ ] The repository root does not contain .NET source code outside `sources/`.
@@ -219,6 +226,10 @@ sources/backend/.ai/
 ```
 
 ```text
+sources/backend/.ai-overlay/
+```
+
+```text
 <repository-root>/src/
 <repository-root>/tests/
 ```
@@ -233,6 +244,7 @@ Also avoid:
 
 - Mixing skills, rules, commands, or agent assets with backend source code.
 - Creating multiple `.ai` directories for each project.
+- Creating multiple `.ai-overlay` directories for each project.
 - Running `dotnet-project-structure` at the AI workspace root.
 - Running `setup-ai-environment` inside `sources/<dotnet-project>/`.
 - Creating .NET code directly at the root.

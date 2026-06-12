@@ -2,6 +2,8 @@
 
 `.ai` is the canonical source of truth for AI-assisted development in this repository. It stores the shared operating rules, skills, commands, agents, templates, MCP assets, and prompt history used to start and maintain projects with AI.
 
+Project-specific AI context belongs in `.ai-overlay`, which is versioned by the root repository. `.ai-overlay` mirrors `.ai` conceptually but starts with only `README.md`; create folders there only when project-specific rules, skills, commands, agents, templates, MCP assets, prompts, notes, or overrides are needed.
+
 Root `.codex`, `.claude`, and `.agents` paths should point to `.ai`, so changes made through any of those tool paths affect the same underlying files. On Windows, true symbolic links can require administrator privileges; directory junctions are the supported non-duplicating fallback.
 
 ## Prerequisites
@@ -57,7 +59,7 @@ initialize project using .ai\skills\setup-ai-environment\SKILL.md skill
 The skill is responsible for these root initialization tasks:
 
 - Initialize the root Git repository when it does not exist.
-- Create root directories and seed files such as `docs/`, `sources/`, `AGENTS.md`, and `.gitignore`.
+- Create root directories and seed files such as `docs/`, `sources/`, `.ai-overlay/README.md`, `AGENTS.md`, and `.gitignore`.
 - Create `.codex`, `.claude`, and `.agents` links to `.ai`.
 - Initialize OpenSpec when `openspec/` is missing.
 - Register `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
@@ -79,6 +81,8 @@ AGENTS.md
 .gitignore
 .gitmodules
 .ai/
+.ai-overlay/
+  README.md
 .codex/      -> .ai
 .claude/     -> .ai
 .agents/     -> .ai
@@ -118,8 +122,10 @@ Treat `.ai` as the project memory and operating system for AI-assisted work.
 6. Use `.ai/templates/` for reusable specification, prompt, documentation, and workflow templates.
 7. Use `.ai/mcp/` for shared MCP servers, configs, prompts, and skills.
 8. Use `.ai/prompts/registry/` as the immutable audit trail of AI-driven project evolution.
-9. Put shared behavior in shared folders first. Use `.ai/codex/overrides/` or `.ai/claude/overrides/` only for genuine tool-specific behavior.
-10. Never create independent `.codex`, `.claude`, or `.agents` directory trees. Those paths must remain links to the canonical `.ai` assets.
+9. Load `.ai-overlay/` after `.ai` when it exists. Treat it as the project-specific overlay.
+10. Put project-specific AI assets in `.ai-overlay` unless the user explicitly asks to evolve the canonical `.ai` context.
+11. Put shared behavior in shared folders first. Use `.ai/codex/overrides/` or `.ai/claude/overrides/` only for genuine shared tool-specific behavior.
+12. Never create independent `.codex`, `.claude`, or `.agents` directory trees. Those paths must remain links to the canonical `.ai` assets.
 
 ## Shared Folders
 
@@ -137,6 +143,8 @@ Treat `.ai` as the project memory and operating system for AI-assisted work.
 - `claude/overrides/`: Claude-specific behavior and local overrides.
 
 Shared behavior should live in shared folders first. Use tool-specific override folders only when Codex and Claude need different behavior.
+
+Project-specific overrides belong in `.ai-overlay/codex/overrides/` or `.ai-overlay/claude/overrides/` and should be created only when needed.
 
 ## Prompt Registry
 
