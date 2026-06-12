@@ -32,7 +32,7 @@ When `.ai` has `origin`, or when the user provides a remote repository URL:
 
 - Register it as a Git submodule of the root repository.
 - Use the remote URL in `.gitmodules`.
-- Commit the submodule gitlink from the root repository.
+- Commit the submodule gitlink from the root repository only after the referenced `.ai` commit has been pushed to its remote.
 - Keep AI-context commits inside the `.ai` repository itself.
 
 ## `.ai` Rules
@@ -53,7 +53,28 @@ Application source code must live under `sources/`, and each project must own it
 - If the source repository has `origin`, `.gitmodules` must use the remote URL.
 - If the source repository does not have `origin`, `.gitmodules` must use a local URL for that module.
 - The root repository commits `.gitmodules` and submodule gitlinks for all source projects.
+- For remote-backed source projects, commit or update the root gitlink only after the referenced source commit has been pushed to its remote.
+- For local source projects without `origin`, a root gitlink can point to a local commit, but the root repository is not portable until that module gets a remote and `.gitmodules` is migrated.
 - Source code commits happen inside `sources/<module>` repositories.
+
+## Gitlink Publication Rule
+
+A gitlink is the root repository entry that stores the exact commit expected for a submodule path. Git records it with mode `160000`.
+
+For any submodule with a remote URL:
+
+1. Commit changes inside the submodule repository.
+2. Push the submodule commit to its remote.
+3. Verify the pushed commit is reachable from the configured remote.
+4. Only then stage the submodule path from the root repository to update the gitlink.
+
+Do not commit a root gitlink that points to an unpublished commit in a remote-backed submodule. A clean clone of the root repository would not be able to fetch that commit.
+
+For any submodule without `origin`:
+
+- The gitlink may point to the local commit as a local bootstrap state.
+- Report that the root repository is local-only for that module.
+- Migrate to a remote-backed submodule before expecting another machine to reproduce the root repository.
 
 ## Migration
 
@@ -76,5 +97,6 @@ When validating a root repository:
 - Verify each source project is a Git repository.
 - Verify each source project is listed in `.gitmodules`.
 - If a source project has `origin`, verify `.gitmodules` uses that remote URL.
+- If a source project has `origin`, verify the root gitlink commit is reachable from that remote.
 - If a source project has no `origin`, verify `.gitmodules` uses a local URL.
 - Report and correct local `.gitmodules` source URLs when a remote `origin` becomes available.

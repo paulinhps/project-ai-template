@@ -148,6 +148,8 @@ When `sources/<dotnet-project>` is a submodule:
 - Do not mix commits from the root repository with commits from the .NET project repository.
 - Commit only the submodule reference from the root repository.
 - Commit project source changes inside the project repository itself.
+- When the submodule has `origin`, push project commits before updating the root gitlink.
+- Do not let the root repository point to unpublished commits in remote-backed source submodules.
 
 When `sources/<dotnet-project>` is local-only:
 
@@ -204,6 +206,7 @@ Before finishing, verify:
 - [ ] The repository root does not contain .NET source code outside `sources/`.
 - [ ] Submodules were preserved.
 - [ ] Local-only source repositories are registered as local submodules.
+- [ ] Remote-backed submodule gitlinks point only to commits reachable from their remotes.
 - [ ] Root documentation and project documentation are separated.
 - [ ] The final structure is deterministic and predictable.
 

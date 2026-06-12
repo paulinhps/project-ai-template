@@ -99,6 +99,7 @@ Enforce these invariants for every module:
 - New local modules without a remote are allowed only as a bootstrap state; register them as local submodules and report `remote origin pending`.
 - Remote-backed modules should be registered as Git submodules of the root repository using the remote URL.
 - Local-only modules should be registered as local Git submodules until they are migrated to a remote-backed submodule.
+- Remote-backed module gitlinks must point only to commits already pushed to the module remote.
 - Existing repositories and submodules must never be overwritten automatically.
 
 ## Mandatory Preflight
@@ -326,6 +327,8 @@ Repair rules:
 
 After repair, stage only root metadata and submodule gitlinks in the root repository. Commit source changes inside the source repository first.
 
+For remote-backed modules, do not stage or commit the root submodule path until the module commit has been pushed and verified reachable from `origin`.
+
 ## Safety Requirements
 
 Never:
@@ -347,6 +350,7 @@ Always:
 - Request explicit confirmation before destructive or history-changing actions.
 - Prefer `git submodule add` for remote-backed modules.
 - Keep root repository commits separate from module repository commits.
+- Push remote-backed submodule commits before updating the root gitlink.
 
 ## Submodule Lifecycle
 
@@ -407,6 +411,20 @@ git add sources/<module-name>
 git commit -m "chore: update <module-name> source submodule"
 ```
 
+When the submodule commit was created locally, use this order instead:
+
+```bash
+git -C sources/<module-name> status --short
+git -C sources/<module-name> add <changed-files>
+git -C sources/<module-name> commit -m "<message>"
+git -C sources/<module-name> push
+git -C sources/<module-name> branch --contains HEAD --remotes
+git add sources/<module-name>
+git commit -m "chore: update <module-name> source submodule"
+```
+
+If `git push` fails or the commit is not reachable from a remote branch, do not update the root gitlink.
+
 ### Removal
 
 Submodule removal is destructive to local checkout state. Do not perform it automatically. After explicit confirmation and backup, a typical removal plan is:
@@ -428,7 +446,7 @@ Use migration when converting a local submodule to a remote-backed submodule:
 3. Push the local repository to the remote.
 4. Update `.gitmodules` from the local URL to the remote URL.
 5. Run submodule sync/update when needed.
-6. Verify `.gitmodules`, submodule status, and checked-out commit.
+6. Verify `.gitmodules`, submodule status, checked-out commit, and remote reachability.
 7. Commit root repository metadata.
 
 Never migrate by deleting or overwriting the existing local repository without confirmation.
@@ -480,6 +498,7 @@ Do not assume dirty root changes are related. Report the status and proceed only
 - Keep module names short, lowercase, and purpose-oriented, such as `backend`, `frontend`, `mobile`, or `infrastructure`.
 - Use Conventional Commits for both root repository commits and module commits.
 - Commit module repository changes inside the module first, then commit submodule pointer changes in the root repository.
+- For remote-backed modules, push module commits before staging or committing the root gitlink.
 - Keep `.gitmodules` tracked in the root repository.
 - Keep every source module registered as a submodule; use local URLs only while `origin` is missing.
 - Do not vendor source repositories by copying their files into the root repository.
