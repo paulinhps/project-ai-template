@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dotnet Canonical Review"
+  short_description: "Audits .NET projects against canonical AI rules"
+  default_prompt: "Use $dotnet-canonical-review to audit a .NET project under sources/ and persist the compliance review artifacts."
