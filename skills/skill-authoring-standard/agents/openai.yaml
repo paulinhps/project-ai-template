@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Authoring Standard"
+  short_description: "Standard for canonical AI skills"
+  default_prompt: "Use $skill-authoring-standard to create, review, evolve, or refactor a canonical AI skill."
