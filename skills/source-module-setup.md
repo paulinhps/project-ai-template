@@ -168,6 +168,14 @@ git submodule add https://github.com/example/backend.git sources/backend
 git submodule update --init --recursive
 ```
 
+PowerShell equivalent:
+
+```powershell
+New-Item -ItemType Directory -Force -Path sources
+git submodule add https://github.com/example/backend.git sources/backend
+git submodule update --init --recursive
+```
+
 Expected result:
 
 ```text
@@ -241,6 +249,12 @@ git -C sources/backend remote -v
 Report that future remote configuration should use:
 
 ```bash
+git -C sources/backend remote add origin <remote-repository-url>
+```
+
+PowerShell equivalent:
+
+```powershell
 git -C sources/backend remote add origin <remote-repository-url>
 ```
 
@@ -364,9 +378,24 @@ git submodule add <remote-repository-url> sources/<module-name>
 git submodule update --init --recursive
 ```
 
+PowerShell equivalent:
+
+```powershell
+New-Item -ItemType Directory -Force -Path sources
+git submodule add <remote-repository-url> sources/<module-name>
+git submodule update --init --recursive
+```
+
 Commit the root repository metadata separately:
 
 ```bash
+git add .gitmodules sources/<module-name>
+git commit -m "chore: add <module-name> source submodule"
+```
+
+PowerShell equivalent:
+
+```powershell
 git add .gitmodules sources/<module-name>
 git commit -m "chore: add <module-name> source submodule"
 ```
@@ -382,6 +411,13 @@ git submodule add <remote-repository-url> sources/<module-name>
 git submodule update --init --recursive
 ```
 
+PowerShell equivalent:
+
+```powershell
+git submodule add <remote-repository-url> sources/<module-name>
+git submodule update --init --recursive
+```
+
 If the directory already exists, do not force registration. Plan a manual migration that preserves the existing repository and root state.
 
 ### Synchronization
@@ -393,11 +429,24 @@ git submodule sync --recursive
 git submodule update --init --recursive
 ```
 
+PowerShell equivalent:
+
+```powershell
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
 ### Update
 
 Use to fetch the commit recorded by the root repository:
 
 ```bash
+git submodule update --init --recursive
+```
+
+PowerShell equivalent:
+
+```powershell
 git submodule update --init --recursive
 ```
 
@@ -411,9 +460,31 @@ git add sources/<module-name>
 git commit -m "chore: update <module-name> source submodule"
 ```
 
+PowerShell equivalent:
+
+```powershell
+git -C sources/<module-name> fetch origin
+git -C sources/<module-name> checkout <branch-or-commit>
+git -C sources/<module-name> pull --ff-only
+git add sources/<module-name>
+git commit -m "chore: update <module-name> source submodule"
+```
+
 When the submodule commit was created locally, use this order instead:
 
 ```bash
+git -C sources/<module-name> status --short
+git -C sources/<module-name> add <changed-files>
+git -C sources/<module-name> commit -m "<message>"
+git -C sources/<module-name> push
+git -C sources/<module-name> branch --contains HEAD --remotes
+git add sources/<module-name>
+git commit -m "chore: update <module-name> source submodule"
+```
+
+PowerShell equivalent:
+
+```powershell
 git -C sources/<module-name> status --short
 git -C sources/<module-name> add <changed-files>
 git -C sources/<module-name> commit -m "<message>"
@@ -472,6 +543,13 @@ git submodule sync --recursive
 git submodule update --init --recursive
 ```
 
+PowerShell equivalent:
+
+```powershell
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
 ### Submodule has detached HEAD
 
 Detached HEAD is normal for submodules when they are checked out at the commit recorded by the root repository. If active development is needed inside the module, check out a branch inside the module repository:
@@ -480,11 +558,23 @@ Detached HEAD is normal for submodules when they are checked out at the commit r
 git -C sources/<module-name> checkout <branch-name>
 ```
 
+PowerShell equivalent:
+
+```powershell
+git -C sources/<module-name> checkout <branch-name>
+```
+
 ### Remote origin is missing
 
 For bootstrap local repositories, register the module as a local submodule and report `remote origin pending`. Add a remote only when the user provides a URL:
 
 ```bash
+git -C sources/<module-name> remote add origin <remote-repository-url>
+```
+
+PowerShell equivalent:
+
+```powershell
 git -C sources/<module-name> remote add origin <remote-repository-url>
 ```
 

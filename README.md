@@ -27,6 +27,12 @@ Before using this structure to initialize a new project from zero, install or co
 | npm | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Bundled with Node.js | Required by Node-based setup scripts and optional project tooling. |
 | PowerShell | 7+ preferred | Built-in Windows PowerShell works for the `.ps1` path; PowerShell 7 recommended | Install `powershell` only if using `.ps1` scripts | Install `powershell` only if using `.ps1` scripts | Optional when using the Node setup script. |
 
+Git for Windows must include the standard Git Unix support files used by `git submodule`, including Git's bundled shell helpers. If `git submodule status` fails with missing utilities such as `basename`, `sed`, or `git-sh-setup`, repair or reinstall Git for Windows and prefer running Git from Git Bash, PowerShell 7, Windows Terminal, or another shell where the Git installation is complete.
+
+### Containerized Fallback
+
+Projects using this context should prefer host setup when Git and Node.js are already available. When host parity is uncertain, add a project-specific DevContainer under the root `.devcontainer/` directory. The reusable `.ai` context does not require Docker for normal operation, but a project DevContainer should provide at least Git, Node.js 20 LTS or newer, npm, and any project runtime such as .NET, Java, or Python.
+
 ## Start a New Project from Zero
 
 Use this sequence when creating a new repository that should adopt the shared AI structure.
