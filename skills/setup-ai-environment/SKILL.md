@@ -18,7 +18,7 @@ When configuring or repairing the AI environment:
 5. Use `scripts/setup-ai-environment.mjs` when Node.js is available; it is the cross-platform setup path for Windows, Linux, and macOS.
 6. On Windows, `scripts/setup-ai-environment.ps1` remains a supported PowerShell equivalent.
 7. If neither script can be used, follow the script behavior manually and keep the same safety checks.
-8. Use `assets/seeds/AGENTS.md`, `assets/seeds/.gitignore`, and `assets/seeds/AI_OVERLAY_README.md` as the source templates for new projects.
+8. Use `assets/seeds/AGENTS.md`, `assets/seeds/CLAUDE.md`, `assets/seeds/.gitignore`, and `assets/seeds/AI_OVERLAY_README.md` as the source templates for new projects.
 9. When root files already exist, compare them against the required assertions before changing anything.
 10. If an existing `AGENTS.md`, `.gitignore`, README, documentation structure, or source layout conflicts with the canonical structure, stop and ask for one of these decisions:
    - Merge: preserve project-specific content and add missing canonical context.
@@ -169,6 +169,7 @@ Seed files live in:
 
 ```text
 assets/seeds/AGENTS.md
+assets/seeds/CLAUDE.md
 assets/seeds/.gitignore
 assets/seeds/AI_OVERLAY_README.md
 ```
@@ -190,6 +191,8 @@ When a root file already exists, do not silently overwrite it. If it is missing 
 - Shared rules, skills, commands, agents, templates, and MCP assets live under `.ai`.
 - Project-specific rules, skills, commands, agents, templates, and MCP assets live under `.ai-overlay` unless the user explicitly asks to change `.ai`.
 - Prompt registry files are immutable and incrementally numbered.
+
+A root `CLAUDE.md` bridge must exist so Claude Code, which reads `CLAUDE.md` natively but not `AGENTS.md`, discovers `AGENTS.md` and the `.ai` context. Keep it short; it must not duplicate canonical content. See `.ai/claude/overrides/claude-code.md`.
 
 `.gitignore` must include the root link paths so Git does not traverse them:
 
@@ -257,6 +260,7 @@ Before finishing, verify:
 - [ ] `docs/` exists at the repository root.
 - [ ] `sources/` exists at the repository root.
 - [ ] `AGENTS.md` exists and includes the required canonical assertions.
+- [ ] `CLAUDE.md` bridge exists at the repository root for Claude Code discovery.
 - [ ] `.gitignore` includes `.codex/`, `.claude/`, and `.agents/`.
 - [ ] `.ai` reference handling follows `.ai/rules/repository-submodule-references.md`.
 - [ ] Root Git initialization and initial commit behavior followed the standard flow.

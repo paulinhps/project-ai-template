@@ -6,6 +6,8 @@ Project-specific AI context belongs in `.ai-overlay`, which is versioned by the 
 
 Root `.codex`, `.claude`, and `.agents` paths should point to `.ai`, so changes made through any of those tool paths affect the same underlying files. On Windows, true symbolic links can require administrator privileges; directory junctions are the supported non-duplicating fallback.
 
+Claude Code reads a root `CLAUDE.md` automatically but does not read `AGENTS.md` natively, so projects keep a short `CLAUDE.md` bridge at the root that points to `AGENTS.md` and `.ai`. The bridge must not duplicate canonical content. Claude Code specifics, including how the `.claude` pointer interacts with Claude Code's own configuration, are documented in `.ai/claude/overrides/claude-code.md`.
+
 ## Prerequisites
 
 Before using this structure to initialize a new project from zero, install or confirm these tools:
@@ -97,6 +99,7 @@ Windows PowerShell equivalent:
 
 ```text
 AGENTS.md
+CLAUDE.md
 .gitignore
 .gitmodules
 .ai/
@@ -147,7 +150,7 @@ Treat `.ai` as the project memory and operating system for AI-assisted work.
 
 ## Optional SDD Tooling
 
-SDD and planning tools are project opt-ins, not part of the canonical setup path. Configure a specific tool only when the user explicitly asks for it.
+SDD and planning tools are project opt-ins, not part of the canonical setup path. Configure a specific tool only when the user explicitly asks for it. An OpenSpec `propose -> apply -> archive` flow is one such optional tool and is not wired by default; configure it only on explicit request.
 
 When optional SDD tooling creates or requires rules, skills, commands, agents, templates, MCP assets, prompts, or overrides, register those assets under `.ai-overlay` so they stay project-specific. Use canonical `.ai` only when the user explicitly asks to evolve the shared context itself.
 
