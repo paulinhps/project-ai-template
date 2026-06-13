@@ -1,6 +1,6 @@
 # AI Project Context
 
-`.ai` is the canonical source of truth for AI-assisted development in this repository. It stores the shared operating rules, skills, commands, agents, templates, MCP assets, and prompt history used to start and maintain projects with AI.
+`.ai` is the canonical source of truth for AI-assisted development in this repository. It stores the shared operating rules, skills, commands, agents, templates, MCP assets, canonical documentation, and prompt history used to start and maintain projects with AI.
 
 Project-specific AI context belongs in `.ai-overlay`, which is versioned by the root repository. `.ai-overlay` mirrors `.ai` conceptually but starts with only `README.md`; create folders there only when project-specific rules, skills, commands, agents, templates, MCP assets, prompts, notes, or overrides are needed.
 
@@ -143,12 +143,13 @@ Treat `.ai` as the project memory and operating system for AI-assisted work.
 4. Use `.ai/commands/` for command definitions and slash-command assets that should be available across tools.
 5. Use `.ai/agents/` for reusable agent definitions.
 6. Use `.ai/templates/` for reusable specification, prompt, documentation, and workflow templates.
-7. Use `.ai/mcp/` for shared MCP servers, configs, prompts, and skills.
-8. Use `.ai/prompts/registry/` as the immutable audit trail of AI-driven project evolution.
-9. Load `.ai-overlay/` after `.ai` when it exists. Treat it as the project-specific overlay.
-10. Put project-specific AI assets in `.ai-overlay` unless the user explicitly asks to evolve the canonical `.ai` context.
-11. Put shared behavior in shared folders first. Use `.ai/codex/overrides/` or `.ai/claude/overrides/` only for genuine shared tool-specific behavior.
-12. Never create independent activated tool pointer trees such as `.codex`, `.claude`, or `.agents`. Those paths must remain links to the canonical `.ai` assets.
+7. Use `.ai/docs/` for reusable documentation and decisions about the canonical AI context itself.
+8. Use `.ai/mcp/` for shared MCP servers, configs, prompts, and skills.
+9. Use `.ai/prompts/registry/` as the immutable audit trail of AI-driven project evolution.
+10. Load `.ai-overlay/` after `.ai` when it exists. Treat it as the project-specific overlay.
+11. Put project-specific AI assets in `.ai-overlay` unless the user explicitly asks to evolve the canonical `.ai` context.
+12. Put shared behavior in shared folders first. Use `.ai/codex/overrides/` or `.ai/claude/overrides/` only for genuine shared tool-specific behavior.
+13. Never create independent activated tool pointer trees such as `.codex`, `.claude`, or `.agents`. Those paths must remain links to the canonical `.ai` assets.
 
 ## Optional SDD Tooling
 
@@ -163,6 +164,7 @@ When optional SDD tooling creates or requires rules, skills, commands, agents, t
 - `commands/`: shared command definitions and slash-command assets.
 - `agents/`: shared agent definitions.
 - `templates/`: shared templates for specs, prompts, docs, and workflows.
+- `docs/`: canonical documentation and ADRs about the reusable `.ai` context.
 - `prompts/registry/`: immutable, incrementally numbered prompt source files.
 - `mcp/`: shared MCP assets, including servers, configs, prompts, and skills.
 
@@ -183,7 +185,7 @@ Setup-time tool activation is driven by profiles under:
 skills/setup-ai-environment/assets/tool-profiles/
 ```
 
-Each profile declares the tool id, display name, root entrypoint, canonical entrypoint, pointer path, override path, discovery summary, and personal-configuration guidance. Add future AI tools by adding a profile and, when needed, extending the generic entrypoint template instead of hardcoding a new setup branch.
+Each profile declares the tool id, display name, root entrypoint, canonical entrypoint, pointer path, override path, discovery summary, and personal-configuration guidance. Add future AI tools through `skills/ai-agent-diagnostic/SKILL.md`: the running agent must discover its own tool surface, fork the remote canonical repository, add the required profile and documentation, validate generated artifacts, and open a pull request back upstream. Prefer adding a profile and, when needed, extending the generic entrypoint template instead of hardcoding a new setup branch.
 
 ## Prompt Registry
 

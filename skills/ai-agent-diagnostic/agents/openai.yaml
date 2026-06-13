@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Agent Diagnostic"
+  short_description: "Discovers AI tools and evolves canonical .ai profiles"
+  default_prompt: "Use $ai-agent-diagnostic to discover the running AI tool, add or adjust its canonical profile, update impacted documentation, and prepare a fork-first PR back upstream."

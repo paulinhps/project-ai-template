@@ -33,13 +33,14 @@ Do not tell the user to run `git init`, `git submodule add`, or the initial root
 Every setup decision must respect:
 
 - **Canonical AI Context**: `.ai` is the source of truth for shared AI assets.
+- **Canonical Documentation**: documentation about the reusable `.ai` structure itself belongs under `.ai/docs`, not root `docs`.
 - **AI Overlay**: `.ai-overlay` is the versioned project-specific AI context overlay. It mirrors `.ai` conceptually but starts with only `README.md` and grows on demand.
 - **Tool Links, Not Copies**: `.codex`, `.claude`, and `.agents` must point to `.ai`.
 - **Tool Profile Activation**: `.ai` may contain canonical support for many AI tools, but a generated root activates only the requested tool surfaces.
 - **Canonical Entrypoint**: `AGENTS.md` remains the shared root operating guide. Tool-specific root files such as `CLAUDE.md` are discovery bridges.
 - **Root Workspace Ownership**: the root owns AI governance, global documentation, source-module references, and root Git coordination.
 - **Source Isolation**: source code belongs under `sources/`, not directly in the root.
-- **Documentation Separation**: global documentation belongs under `docs/`.
+- **Documentation Separation**: root workspace documentation belongs under root `docs/`; reusable canonical documentation belongs under `.ai/docs`.
 - **Explicit Repository References**: use `.ai/rules/repository-submodule-references.md` for `.ai` and source-module reference decisions.
 - **Safe Existing Project Setup**: preserve existing project-specific guidance unless the user chooses replace or restructure.
 - **Project-Specific By Default**: create new project-specific rules, skills, commands, agents, templates, MCP assets, prompts, and overrides under `.ai-overlay` unless the user explicitly asks to change `.ai`.
@@ -152,6 +153,8 @@ sources/
   claude/overrides/
   codex/overrides/
   commands/
+  docs/
+    adr/
   mcp/
   prompts/registry/
   rules/
@@ -232,7 +235,7 @@ When a root file already exists, do not silently overwrite it. If it is missing 
 - `.ai` is canonical.
 - `.ai-overlay` is the project-specific AI context overlay and is versioned with the root repository.
 - Activated tool pointer paths point to `.ai`.
-- Shared rules, skills, commands, agents, templates, and MCP assets live under `.ai`.
+- Shared rules, skills, commands, agents, templates, canonical documentation, and MCP assets live under `.ai`.
 - Project-specific rules, skills, commands, agents, templates, and MCP assets live under `.ai-overlay` unless the user explicitly asks to change `.ai`.
 - Prompt registry files are immutable and incrementally numbered.
 

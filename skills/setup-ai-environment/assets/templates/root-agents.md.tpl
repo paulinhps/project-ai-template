@@ -50,6 +50,7 @@ The root repository tracks reproducible references, not copied implementation tr
 - Shared commands must live in `.ai/commands`.
 - Shared agents must live in `.ai/agents`.
 - Shared templates must live in `.ai/templates`.
+- Shared canonical documentation must live in `.ai/docs`.
 - MCP-related assets must live in `.ai/mcp`.
 
 ## Project Assets
