@@ -1,0 +1,21 @@
+{
+  "id": "codex",
+  "displayName": "Codex",
+  "rootEntrypoint": "AGENTS.md",
+  "canonicalEntrypoint": "AGENTS.md",
+  "pointerName": ".codex",
+  "overridePath": ".ai/codex/overrides",
+  "nativeDiscovery": true,
+  "discoverySummary": "Codex uses AGENTS.md as the shared operating guide for this repository.",
+  "personalConfigGuidance": "Keep personal Codex configuration outside project-specific canonical assets unless a project explicitly documents otherwise.",
+  "readFirst": [
+    "AGENTS.md",
+    ".ai/codex/overrides/codex.md",
+    ".ai/rules/"
+  ],
+  "rules": [
+    "AGENTS.md remains the canonical root operating guide.",
+    ".codex is a pointer to .ai when Codex-specific path identity is activated.",
+    "Put shared Codex-specific behavior in .ai/codex/overrides and project-specific Codex behavior in .ai-overlay/codex/overrides."
+  ]
+}

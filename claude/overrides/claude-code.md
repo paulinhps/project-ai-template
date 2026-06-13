@@ -6,7 +6,7 @@ Claude-specific behavior for users running **Claude Code** against a project tha
 
 - Claude Code automatically reads `CLAUDE.md` from the project root (and from a working subdirectory when entered) as memory.
 - Claude Code does **not** read `AGENTS.md` natively. Therefore the project root must keep a short `CLAUDE.md` bridge that points to `AGENTS.md` and `.ai`.
-- The bridge `CLAUDE.md` is seeded for new projects by the setup skill (`assets/seeds/CLAUDE.md`) and is short by design. The authoritative content stays in `AGENTS.md`, `.ai/rules`, and the other shared folders. Do not move shared documentation into `CLAUDE.md`.
+- The bridge `CLAUDE.md` is generated for new projects by the setup skill when the Claude tool profile is activated. It is short by design. The authoritative content stays in `AGENTS.md`, `.ai/rules`, and the other shared folders. Do not move shared documentation into `CLAUDE.md`.
 
 ## The `.claude` pointer vs Claude Code's own config directory
 
@@ -26,7 +26,7 @@ This structure keeps the `.claude` junction (the canonical model is preserved) a
    initialize project using .ai/skills/setup-ai-environment/SKILL.md skill
    ```
 
-   The setup skill seeds the root `CLAUDE.md` bridge alongside `AGENTS.md`, creates the `.codex`/`.claude`/`.agents` pointers, and registers or ignores `.ai` per `.ai/rules/repository-submodule-references.md`.
+   The setup skill generates the root `CLAUDE.md` bridge alongside `AGENTS.md` when the Claude profile is activated, creates `.agents` and activated tool pointers, and registers or ignores `.ai` per `.ai/rules/repository-submodule-references.md`.
 3. Open the project in Claude Code. It reads root `CLAUDE.md`, which directs it to `AGENTS.md` and the `.ai` context.
 
 ## Windows junctions and symlinks

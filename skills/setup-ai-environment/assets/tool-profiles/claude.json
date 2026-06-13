@@ -1,0 +1,22 @@
+{
+  "id": "claude",
+  "displayName": "Claude Code",
+  "rootEntrypoint": "CLAUDE.md",
+  "canonicalEntrypoint": "AGENTS.md",
+  "pointerName": ".claude",
+  "overridePath": ".ai/claude/overrides",
+  "nativeDiscovery": true,
+  "discoverySummary": "Claude Code reads CLAUDE.md natively, so CLAUDE.md is generated as a short bridge to AGENTS.md and .ai.",
+  "personalConfigGuidance": "Do not rely on project-level .claude for Claude Code settings in this structure; use user-level ~/.claude for personal Claude Code configuration.",
+  "readFirst": [
+    "CLAUDE.md",
+    "AGENTS.md",
+    ".ai/claude/overrides/claude-code.md",
+    ".ai/rules/"
+  ],
+  "rules": [
+    "CLAUDE.md is a discovery bridge, not the canonical source of shared instructions.",
+    ".claude is a pointer to .ai when Claude-specific path identity is activated.",
+    "Put shared Claude-specific behavior in .ai/claude/overrides and project-specific Claude behavior in .ai-overlay/claude/overrides."
+  ]
+}

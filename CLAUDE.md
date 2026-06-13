@@ -11,7 +11,7 @@ This repository is the canonical AI context (`.ai`) for AI-assisted development.
 ## Canonical rules (do not violate)
 
 - The contents of this repository are the canonical `.ai` context and the single source of truth.
-- In a generated project, `.codex`, `.claude`, and `.agents` are pointers (Windows directory junctions, or symlinks when available) to `.ai`. Never turn them into independent trees and never duplicate `.ai` content into them.
+- In a generated project, activated tool pointer paths such as `.agents`, `.codex`, and `.claude` are pointers (Windows directory junctions, or symlinks when available) to `.ai`. Never turn them into independent trees and never duplicate `.ai` content into them.
 - Put shared behavior in the shared folders first: `rules/`, `skills/`, `commands/`, `agents/`, `templates/`, `mcp/`.
 - Put Claude-specific shared behavior in `claude/overrides/`. In a generated project, project-specific context goes in `.ai-overlay/` (and `.ai-overlay/claude/overrides/` for project-specific Claude behavior), only when needed.
 - Prompt files under `prompts/registry/` are immutable. Add a new sequential `####-name.md`; never edit existing ones.

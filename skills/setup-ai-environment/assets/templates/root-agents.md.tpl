@@ -12,13 +12,15 @@ Project-specific AI assets must live in `.ai-overlay` unless the user explicitly
 
 Agents should load `.ai` first, then `.ai-overlay` as the project-specific overlay.
 
-Claude Code reads the root `CLAUDE.md` automatically as its discovery entry point; it does not read this `AGENTS.md` natively. `CLAUDE.md` is a short bridge that points back to this guide and to `.ai`. Keep shared documentation in `AGENTS.md` and `.ai`, not in `CLAUDE.md`. Claude-specific behavior is documented in `.ai/claude/overrides/claude-code.md`.
+This root is initialized for: {{enabledToolNames}}.
 
-`.codex`, `.claude`, and `.agents` point to `.ai`. The requested symbolic links required administrator privileges in this Windows environment, so directory junctions were used as the non-duplicating fallback. Changes made through `.ai`, `.codex`, `.claude`, or `.agents` affect the same underlying files.
+{{toolDiscoverySection}}
 
-Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
+Activated tool pointer paths point to `.ai`: {{activatedPointerNames}}. The setup script creates symbolic links when available and falls back to Windows directory junctions when needed. Changes made through activated pointer paths affect the same underlying files.
 
-Because Git traverses these Windows junctions as directories on this host, `.gitignore` excludes `.codex/`, `.claude/`, and `.agents/`. Track canonical files through `.ai`.
+Do not create independent trees for activated tool pointer paths.
+
+Because Git can traverse Windows junctions as directories, `.gitignore` excludes activated pointer paths. Track canonical files through `.ai`.
 
 ## Project Initialization
 
@@ -28,7 +30,7 @@ New projects must start by cloning or downloading the shared `.ai` context into 
 initialize project using .ai/skills/setup-ai-environment/SKILL.md skill
 ```
 
-The setup skill is responsible for initializing the root Git repository, creating root directories and seed files, creating `.ai-overlay/README.md`, creating tool links, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
+The setup skill is responsible for initializing the root Git repository, creating root directories and generated files, creating `.ai-overlay/README.md`, creating activated tool links, registering or ignoring the `.ai` reference according to its repository state, and creating the initial root commit. Do not perform those root initialization steps manually in the standard flow.
 
 ## Repository References
 
@@ -69,10 +71,7 @@ Tool-specific rules, skills, commands, agents, templates, MCP assets, prompts, a
 
 ## Tool-Specific Overrides
 
-- Shared Codex-specific behavior must live in `.ai/codex/overrides`.
-- Shared Claude-specific behavior must live in `.ai/claude/overrides`.
-- Project-specific Codex behavior must live in `.ai-overlay/codex/overrides`.
-- Project-specific Claude behavior must live in `.ai-overlay/claude/overrides`.
+{{toolOverrideSection}}
 
 Use overrides only for genuine tool-specific behavior. Shared instructions should stay in the shared folders.
 

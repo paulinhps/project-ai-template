@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const scriptRoot = dirname(scriptPath);
 const skillRoot = dirname(scriptRoot);
-const seedRoot = join(skillRoot, "assets", "seeds");
+const assetRoot = join(skillRoot, "assets");
+const seedRoot = join(assetRoot, "seeds");
+const templateRoot = join(assetRoot, "templates");
+const profileRoot = join(assetRoot, "tool-profiles");
 
 const options = parseArgs(process.argv.slice(2));
 const projectRoot = resolve(options.projectRoot ?? process.cwd());
@@ -17,6 +20,7 @@ const initialCommitMessage = options.initialCommitMessage ?? "chore: initialize 
 const aiRepositoryUrl = options.aiRepositoryUrl ?? "";
 const registerLocalAiSubmodule = Boolean(options.registerLocalAiSubmodule);
 const skipInitialCommit = Boolean(options.skipInitialCommit);
+const activeProfiles = resolveActiveProfiles(options.aiTool ?? "both");
 
 if (!defaultBranch.trim()) {
   throw new Error("Default branch cannot be empty");
@@ -24,6 +28,7 @@ if (!defaultBranch.trim()) {
 
 process.chdir(projectRoot);
 step(`Configuring ${projectRoot}`);
+step(`Activated AI tools: ${activeProfiles.map((profile) => profile.id).join(", ")}`);
 
 if (!gitOk(["rev-parse", "--is-inside-work-tree"])) {
   step("Initializing root Git repository");
@@ -38,17 +43,7 @@ if (!existsSync(aiRoot)) {
   runGit(["submodule", "add", aiRepositoryUrl, ".ai"]);
 }
 
-for (const dir of [
-  "agents",
-  "claude/overrides",
-  "codex/overrides",
-  "commands",
-  "mcp",
-  "prompts/registry",
-  "rules",
-  "skills",
-  "templates",
-]) {
+for (const dir of canonicalAiDirectories()) {
   ensureDirectory(join(aiRoot, dir));
 }
 
@@ -72,16 +67,14 @@ ensureDirectory(overlayRoot);
 copySeedIfMissing("AI_OVERLAY_README.md", join(overlayRoot, "README.md"));
 
 const gitignorePath = join(projectRoot, ".gitignore");
-ensureAgentsFile(join(projectRoot, "AGENTS.md"));
-copySeedIfMissing("CLAUDE.md", join(projectRoot, "CLAUDE.md"));
+ensureAgentsFile(join(projectRoot, "AGENTS.md"), activeProfiles);
+copyToolEntrypoints(activeProfiles);
 copySeedIfMissing(".gitignore", gitignorePath);
-ensureLine(gitignorePath, ".codex/");
-ensureLine(gitignorePath, ".claude/");
-ensureLine(gitignorePath, ".agents/");
 
-newDirectoryLink(join(projectRoot, ".codex"), aiRoot);
-newDirectoryLink(join(projectRoot, ".claude"), aiRoot);
-newDirectoryLink(join(projectRoot, ".agents"), aiRoot);
+for (const pointer of activePointerNames(activeProfiles)) {
+  ensureLine(gitignorePath, `${pointer}/`);
+  newDirectoryLink(join(projectRoot, pointer), aiRoot);
+}
 
 const aiRegisteredAsSubmodule = ensureAiSubmodule(projectRoot);
 
@@ -89,7 +82,7 @@ if (!skipInitialCommit) {
   const hasHead = gitOk(["rev-parse", "--verify", "HEAD"]);
   if (!hasHead) {
     step("Creating root initial commit");
-    runGit(["add", "AGENTS.md", "CLAUDE.md", ".gitignore", ".ai-overlay", "docs", "sources"]);
+    runGit(["add", ...initialCommitPaths(activeProfiles)]);
     if (existsSync(".gitmodules")) runGit(["add", ".gitmodules"]);
     if (aiRegisteredAsSubmodule) runGit(["add", ".ai"]);
     runGit(["commit", "-m", initialCommitMessage]);
@@ -157,10 +150,11 @@ function ensureDirectory(path) {
 
 function ensureLine(path, line) {
   if (!existsSync(path)) writeFileSync(path, "", "utf8");
-  const lines = readFileSync(path, "utf8").split(/\r?\n/);
+  const current = readFileSync(path, "utf8");
+  const lines = current.split(/\r?\n/);
   if (!lines.includes(line)) {
     const suffix = lines.at(-1) === "" ? "" : "\n";
-    writeFileSync(path, `${readFileSync(path, "utf8")}${suffix}${line}\n`, "utf8");
+    writeFileSync(path, `${current}${suffix}${line}\n`, "utf8");
   }
 }
 
@@ -182,6 +176,24 @@ function copySeedIfMissing(seedName, destinationPath) {
   step(`Created ${destinationPath.split(/[\\/]/).at(-1)} from seed`);
 }
 
+function writeRenderedIfMissing(templateName, destinationPath, values) {
+  if (existsSync(destinationPath)) return;
+  const text = renderTemplate(templateName, values);
+  ensureDirectory(dirname(destinationPath));
+  writeFileSync(destinationPath, text, "utf8");
+  step(`Created ${destinationPath.split(/[\\/]/).at(-1)} from template`);
+}
+
+function renderTemplate(templateName, values) {
+  const templatePath = join(templateRoot, templateName);
+  if (!existsSync(templatePath)) throw new Error(`Missing template file: ${templatePath}`);
+  let rendered = readFileSync(templatePath, "utf8");
+  for (const [key, value] of Object.entries(values)) {
+    rendered = rendered.replaceAll(`{{${key}}}`, value);
+  }
+  return rendered;
+}
+
 function newDirectoryLink(linkPath, targetPath) {
   const resolvedTarget = resolve(targetPath);
   if (existsSync(linkPath)) {
@@ -194,8 +206,7 @@ function newDirectoryLink(linkPath, targetPath) {
   }
 
   try {
-    const type = process.platform === "win32" ? "dir" : "dir";
-    symlinkSync(resolvedTarget, linkPath, type);
+    symlinkSync(resolvedTarget, linkPath, "dir");
     step(`Created symbolic link ${linkPath} -> ${resolvedTarget}`);
   } catch (error) {
     if (process.platform !== "win32") throw error;
@@ -204,13 +215,13 @@ function newDirectoryLink(linkPath, targetPath) {
   }
 }
 
-function ensureAgentsFile(path) {
-  copySeedIfMissing("AGENTS.md", path);
+function ensureAgentsFile(path, profiles) {
+  writeRenderedIfMissing("root-agents.md.tpl", path, rootAgentsValues(profiles));
   const required = [
     "`.ai` is the canonical AI context directory.",
     "`.ai-overlay` is the project-specific AI context directory.",
-    "`.codex`, `.claude`, and `.agents` point to `.ai`.",
     "Project-specific AI assets must live in `.ai-overlay` unless the user explicitly asks to change `.ai`.",
+    "Activated tool pointer paths point to `.ai`",
     "Shared agents must live in `.ai/agents`.",
     "Prompt source files are immutable and versioned under `.ai/prompts/registry`.",
   ];
@@ -219,6 +230,13 @@ function ensureAgentsFile(path) {
     if (!text.includes(snippet)) {
       throw new Error(`AGENTS.md exists but is missing required assertion: ${snippet}. Choose merge, replace, or restructure before continuing.`);
     }
+  }
+}
+
+function copyToolEntrypoints(profiles) {
+  for (const profile of profiles) {
+    if (profile.rootEntrypoint === "AGENTS.md") continue;
+    writeRenderedIfMissing("agent-entrypoint.md.tpl", join(projectRoot, profile.rootEntrypoint), entrypointValues(profile));
   }
 }
 
@@ -271,7 +289,7 @@ function ensureAiReadme(aiPath) {
 
 This directory is the canonical AI context for the project.
 
-Shared rules, skills, commands, agents, templates, prompts, and MCP assets live here. Root \`.codex\`, \`.claude\`, and \`.agents\` links point to this directory.
+Shared rules, skills, commands, agents, templates, prompts, and MCP assets live here. Activated root tool pointers point to this directory.
 `, "utf8");
 }
 
@@ -281,4 +299,80 @@ function getGitOriginUrl(path) {
     return result.stdout.trim();
   }
   return "";
+}
+
+function resolveActiveProfiles(aiTool) {
+  const requested = aiTool === "both" ? ["codex", "claude"] : aiTool.split(",").map((item) => item.trim()).filter(Boolean);
+  if (requested.length === 0) throw new Error("--ai-tool cannot be empty. Use codex, claude, or both.");
+  const seen = new Set();
+  return requested.filter((id) => {
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  }).map(loadToolProfile);
+}
+
+function loadToolProfile(id) {
+  const profilePath = join(profileRoot, `${id}.json`);
+  if (!existsSync(profilePath)) {
+    throw new Error(`Unknown AI tool profile '${id}'. Add ${profilePath} or use codex, claude, or both.`);
+  }
+  return JSON.parse(readFileSync(profilePath, "utf8"));
+}
+
+function allToolProfiles() {
+  return readdirSync(profileRoot)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => loadToolProfile(file.slice(0, -".json".length)));
+}
+
+function canonicalAiDirectories() {
+  const toolDirs = allToolProfiles().map((profile) => `${profile.id}/overrides`);
+  return [
+    "agents",
+    "commands",
+    "mcp",
+    "prompts/registry",
+    "rules",
+    "skills",
+    "templates",
+    ...toolDirs,
+  ];
+}
+
+function activePointerNames(profiles) {
+  return [".agents", ...profiles.map((profile) => profile.pointerName)];
+}
+
+function initialCommitPaths(profiles) {
+  return [
+    "AGENTS.md",
+    ...profiles.map((profile) => profile.rootEntrypoint).filter((entrypoint) => entrypoint !== "AGENTS.md"),
+    ".gitignore",
+    ".ai-overlay",
+    "docs",
+    "sources",
+  ];
+}
+
+function rootAgentsValues(profiles) {
+  return {
+    enabledToolNames: profiles.map((profile) => profile.displayName).join(", "),
+    activatedPointerNames: activePointerNames(profiles).map((pointer) => `\`${pointer}\``).join(", "),
+    toolDiscoverySection: profiles.map((profile) => `- ${profile.displayName}: ${profile.discoverySummary}`).join("\n"),
+    toolOverrideSection: profiles.flatMap((profile) => [
+      `- Shared ${profile.displayName}-specific behavior must live in \`${profile.overridePath}\`.`,
+      `- Project-specific ${profile.displayName}-specific behavior must live in \`.ai-overlay/${profile.id}/overrides\`.`,
+    ]).join("\n"),
+  };
+}
+
+function entrypointValues(profile) {
+  return {
+    rootEntrypoint: profile.rootEntrypoint,
+    toolName: profile.displayName,
+    readFirstBullets: profile.readFirst.map((item) => `1. Read \`${item}\`.`).join("\n"),
+    ruleBullets: profile.rules.map((item) => `- ${item}`).join("\n"),
+    personalConfigGuidance: profile.personalConfigGuidance,
+  };
 }

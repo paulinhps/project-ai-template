@@ -4,9 +4,9 @@
 
 Project-specific AI context belongs in `.ai-overlay`, which is versioned by the root repository. `.ai-overlay` mirrors `.ai` conceptually but starts with only `README.md`; create folders there only when project-specific rules, skills, commands, agents, templates, MCP assets, prompts, notes, or overrides are needed.
 
-Root `.codex`, `.claude`, and `.agents` paths should point to `.ai`, so changes made through any of those tool paths affect the same underlying files. On Windows, true symbolic links can require administrator privileges; directory junctions are the supported non-duplicating fallback.
+Root tool pointer paths should point to `.ai`, so changes made through activated tool paths affect the same underlying files. `.agents` is the shared agent pointer; `.codex` and `.claude` are activated only when the root is initialized for Codex, Claude Code, or both. On Windows, true symbolic links can require administrator privileges; directory junctions are the supported non-duplicating fallback.
 
-Claude Code reads a root `CLAUDE.md` automatically but does not read `AGENTS.md` natively, so projects keep a short `CLAUDE.md` bridge at the root that points to `AGENTS.md` and `.ai`. The bridge must not duplicate canonical content. Claude Code specifics, including how the `.claude` pointer interacts with Claude Code's own configuration, are documented in `.ai/claude/overrides/claude-code.md`.
+`AGENTS.md` is the canonical shared root operating guide. Tool-specific entrypoints are generated only when required by the activated tool profile. Claude Code reads a root `CLAUDE.md` automatically but does not read `AGENTS.md` natively, so Claude activations keep a short `CLAUDE.md` bridge at the root that points to `AGENTS.md` and `.ai`. The bridge must not duplicate canonical content. Claude Code specifics, including how the `.claude` pointer interacts with Claude Code's own configuration, are documented in `.ai/claude/overrides/claude-code.md`. Codex specifics are documented in `.ai/codex/overrides/codex.md`.
 
 ## Prerequisites
 
@@ -39,7 +39,7 @@ Projects using this context should prefer host setup when Git and Node.js are al
 
 Use this sequence when creating a new repository that should adopt the shared AI structure.
 
-The project initialization decision is: first place the shared `.ai` content in the project root, then ask an AI agent to execute the configuration skill. The skill owns root repository initialization, root files and directories, `.ai` reference registration, and the initial root commit.
+The project initialization decision is: first place the shared `.ai` content in the project root, then ask an AI agent to execute the configuration skill. The skill owns root repository initialization, root files and directories, AI tool profile activation, `.ai` reference registration, and the initial root commit.
 
 1. Create or open the empty project directory. Do not run `git init` in the root manually.
 
@@ -77,8 +77,8 @@ initialize project using .ai/skills/setup-ai-environment/SKILL.md skill
 The skill is responsible for these root initialization tasks:
 
 - Initialize the root Git repository when it does not exist.
-- Create root directories and seed files such as `docs/`, `sources/`, `.ai-overlay/README.md`, `AGENTS.md`, and `.gitignore`.
-- Create `.codex`, `.claude`, and `.agents` links to `.ai`.
+- Create root directories and generated files such as `docs/`, `sources/`, `.ai-overlay/README.md`, `AGENTS.md`, tool bridges, and `.gitignore`.
+- Create `.agents` and activated tool links to `.ai`.
 - Register `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
 - Ignore local-only `.ai` contexts in the root repository when `.ai` is copied manually or has no remote.
 - Create the initial root commit when the root repository has no commits.
@@ -86,14 +86,16 @@ The skill is responsible for these root initialization tasks:
 4. Run the cross-platform setup script when executing the skill manually.
 
 ```bash
-node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs
+node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs --ai-tool both
 ```
 
 Windows PowerShell equivalent:
 
 ```powershell
-.\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1
+.\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1 -AiTool "both"
 ```
+
+Use `--ai-tool codex` / `-AiTool "codex"` for a Codex-focused root, `--ai-tool claude` / `-AiTool "claude"` for a Claude-focused root, and `both` when both tool surfaces should be configured. `both` is the compatibility default.
 
 5. Confirm the expected root shape.
 
@@ -105,9 +107,9 @@ CLAUDE.md
 .ai/
 .ai-overlay/
   README.md
-.codex/      -> .ai
-.claude/     -> .ai
 .agents/     -> .ai
+.codex/      -> .ai when Codex is activated
+.claude/     -> .ai when Claude Code is activated
 docs/
 sources/
 ```
@@ -146,7 +148,7 @@ Treat `.ai` as the project memory and operating system for AI-assisted work.
 9. Load `.ai-overlay/` after `.ai` when it exists. Treat it as the project-specific overlay.
 10. Put project-specific AI assets in `.ai-overlay` unless the user explicitly asks to evolve the canonical `.ai` context.
 11. Put shared behavior in shared folders first. Use `.ai/codex/overrides/` or `.ai/claude/overrides/` only for genuine shared tool-specific behavior.
-12. Never create independent `.codex`, `.claude`, or `.agents` directory trees. Those paths must remain links to the canonical `.ai` assets.
+12. Never create independent activated tool pointer trees such as `.codex`, `.claude`, or `.agents`. Those paths must remain links to the canonical `.ai` assets.
 
 ## Optional SDD Tooling
 
@@ -172,6 +174,16 @@ When optional SDD tooling creates or requires rules, skills, commands, agents, t
 Shared behavior should live in shared folders first. Use tool-specific override folders only when Codex and Claude need different behavior.
 
 Project-specific overrides belong in `.ai-overlay/codex/overrides/` or `.ai-overlay/claude/overrides/` and should be created only when needed.
+
+## Tool Profiles
+
+Setup-time tool activation is driven by profiles under:
+
+```text
+skills/setup-ai-environment/assets/tool-profiles/
+```
+
+Each profile declares the tool id, display name, root entrypoint, canonical entrypoint, pointer path, override path, discovery summary, and personal-configuration guidance. Add future AI tools by adding a profile and, when needed, extending the generic entrypoint template instead of hardcoding a new setup branch.
 
 ## Prompt Registry
 

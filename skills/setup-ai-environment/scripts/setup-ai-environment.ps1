@@ -4,6 +4,7 @@ param(
     [string]$AiRepositoryUrl = "",
     [string]$DefaultBranch = "main",
     [string]$InitialCommitMessage = "chore: initialize AI project environment",
+    [string]$AiTool = "both",
     [switch]$RegisterLocalAiSubmodule,
     [switch]$SkipInitialCommit
 )
@@ -16,7 +17,10 @@ if ([string]::IsNullOrWhiteSpace($DefaultBranch)) {
 }
 
 $SkillRoot = Split-Path -Parent $PSScriptRoot
-$SeedRoot = Join-Path $SkillRoot "assets\seeds"
+$AssetRoot = Join-Path $SkillRoot "assets"
+$SeedRoot = Join-Path $AssetRoot "seeds"
+$TemplateRoot = Join-Path $AssetRoot "templates"
+$ProfileRoot = Join-Path $AssetRoot "tool-profiles"
 
 function Write-Step {
     param([string]$Message)
@@ -54,10 +58,8 @@ function Initialize-GitRepository {
     }
 
     Write-Step "Git does not support init --initial-branch; falling back to branch rename"
-    $initArgs = $prefix + @("init")
-    $renameArgs = $prefix + @("branch", "-M", $DefaultBranch)
-    Run-Git @initArgs
-    Run-Git @renameArgs
+    Run-Git @($prefix + @("init"))
+    Run-Git @($prefix + @("branch", "-M", $DefaultBranch))
 }
 
 function Ensure-Directory {
@@ -130,6 +132,55 @@ function Copy-SeedIfMissing {
     Write-Step "Created $(Split-Path -Leaf $DestinationPath) from seed"
 }
 
+function Render-Template {
+    param(
+        [string]$TemplateName,
+        [hashtable]$Values
+    )
+
+    $templatePath = Join-Path $TemplateRoot $TemplateName
+    if (-not (Test-Path -LiteralPath $templatePath)) {
+        throw "Missing template file: $templatePath"
+    }
+
+    $rendered = Get-Content -LiteralPath $templatePath -Raw
+    foreach ($key in $Values.Keys) {
+        $rendered = $rendered.Replace("{{$key}}", [string]$Values[$key])
+    }
+
+    return $rendered
+}
+
+function Write-Utf8NoBom {
+    param(
+        [string]$Path,
+        [string]$Value
+    )
+
+    $encoding = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($Path, $Value, $encoding)
+}
+
+function Write-RenderedIfMissing {
+    param(
+        [string]$TemplateName,
+        [string]$DestinationPath,
+        [hashtable]$Values
+    )
+
+    if (Test-Path -LiteralPath $DestinationPath) {
+        return
+    }
+
+    $parent = Split-Path -Parent $DestinationPath
+    if (-not [string]::IsNullOrWhiteSpace($parent)) {
+        Ensure-Directory $parent
+    }
+
+    Write-Utf8NoBom $DestinationPath (Render-Template $TemplateName $Values)
+    Write-Step "Created $(Split-Path -Leaf $DestinationPath) from template"
+}
+
 function New-DirectoryLink {
     param(
         [string]$LinkPath,
@@ -141,27 +192,11 @@ function New-DirectoryLink {
     if (Test-Path -LiteralPath $LinkPath) {
         $item = Get-Item -LiteralPath $LinkPath -Force
         if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
-            $currentTarget = $item.Target
-            if ($currentTarget -is [array]) {
-                $currentTarget = $currentTarget[0]
-            }
-
-            $resolvedCurrentTarget = ""
-            if (-not [string]::IsNullOrWhiteSpace($currentTarget) -and (Test-Path -LiteralPath $currentTarget)) {
-                $resolvedCurrentTarget = (Resolve-Path -LiteralPath $currentTarget).Path
-            }
-
-            if ($resolvedCurrentTarget -eq $resolvedTarget) {
-                Write-Step "Link already exists: $LinkPath"
-                return
-            }
-
-            Remove-Item -LiteralPath $LinkPath -Force
-            Write-Step "Removed link with unexpected target $LinkPath -> $currentTarget"
+            Write-Step "Link already exists: $LinkPath"
+            return
         }
-        else {
-            throw "$LinkPath already exists and is not a link. Move it aside before running this setup."
-        }
+
+        throw "$LinkPath already exists and is not a link. Move it aside before running this setup."
     }
 
     try {
@@ -174,16 +209,122 @@ function New-DirectoryLink {
     }
 }
 
-function Ensure-AgentsFile {
-    param([string]$Path)
+function Load-ToolProfile {
+    param([string]$Id)
 
-    Copy-SeedIfMissing "AGENTS.md" $Path
+    $profilePath = Join-Path $ProfileRoot "$Id.json"
+    if (-not (Test-Path -LiteralPath $profilePath)) {
+        throw "Unknown AI tool profile '$Id'. Add $profilePath or use codex, claude, or both."
+    }
+
+    return Get-Content -LiteralPath $profilePath -Raw | ConvertFrom-Json
+}
+
+function Resolve-ActiveProfiles {
+    param([string]$RequestedTool)
+
+    if ($RequestedTool -eq "both") {
+        $ids = @("codex", "claude")
+    }
+    else {
+        $ids = @($RequestedTool.Split(",") | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    }
+
+    if ($ids.Count -eq 0) {
+        throw "-AiTool cannot be empty. Use codex, claude, or both."
+    }
+
+    $seen = @{}
+    $profiles = @()
+    foreach ($id in $ids) {
+        if ($seen.ContainsKey($id)) {
+            continue
+        }
+        $seen[$id] = $true
+        $profiles += Load-ToolProfile $id
+    }
+
+    return $profiles
+}
+
+function Get-AllToolProfiles {
+    Get-ChildItem -LiteralPath $ProfileRoot -Filter "*.json" | ForEach-Object {
+        Load-ToolProfile $_.BaseName
+    }
+}
+
+function Get-CanonicalAiDirectories {
+    $toolDirs = @(Get-AllToolProfiles | ForEach-Object { "$($_.id)/overrides" })
+    return @(
+        "agents",
+        "commands",
+        "mcp",
+        "prompts/registry",
+        "rules",
+        "skills",
+        "templates"
+    ) + $toolDirs
+}
+
+function Get-ActivePointerNames {
+    param([object[]]$Profiles)
+
+    return @(".agents") + @($Profiles | ForEach-Object { $_.pointerName })
+}
+
+function Get-InitialCommitPaths {
+    param([object[]]$Profiles)
+
+    $entrypoints = @($Profiles | ForEach-Object { $_.rootEntrypoint } | Where-Object { $_ -ne "AGENTS.md" })
+    return @("AGENTS.md") + $entrypoints + @(".gitignore", ".ai-overlay", "docs", "sources")
+}
+
+function Get-RootAgentsValues {
+    param([object[]]$Profiles)
+
+    $enabledToolNames = ($Profiles | ForEach-Object { $_.displayName }) -join ", "
+    $activatedPointerNames = (Get-ActivePointerNames $Profiles | ForEach-Object { "``$_``" }) -join ", "
+    $toolDiscoverySection = ($Profiles | ForEach-Object { "- $($_.displayName): $($_.discoverySummary)" }) -join "`n"
+    $toolOverrideSection = ($Profiles | ForEach-Object {
+        "- Shared $($_.displayName)-specific behavior must live in ``$($_.overridePath)``.`n- Project-specific $($_.displayName)-specific behavior must live in ``.ai-overlay/$($_.id)/overrides``."
+    }) -join "`n"
+
+    return @{
+        enabledToolNames = $enabledToolNames
+        activatedPointerNames = $activatedPointerNames
+        toolDiscoverySection = $toolDiscoverySection
+        toolOverrideSection = $toolOverrideSection
+    }
+}
+
+function Get-EntrypointValues {
+    param([object]$Profile)
+
+    $readFirstBullets = ($Profile.readFirst | ForEach-Object { "1. Read ``$_``." }) -join "`n"
+    $ruleBullets = ($Profile.rules | ForEach-Object { "- $_" }) -join "`n"
+
+    return @{
+        rootEntrypoint = $Profile.rootEntrypoint
+        toolName = $Profile.displayName
+        readFirstBullets = $readFirstBullets
+        ruleBullets = $ruleBullets
+        personalConfigGuidance = $Profile.personalConfigGuidance
+    }
+}
+
+function Ensure-AgentsFile {
+    param(
+        [string]$Path,
+        [object[]]$Profiles
+    )
+
+    Write-RenderedIfMissing "root-agents.md.tpl" $Path (Get-RootAgentsValues $Profiles)
 
     $required = @(
         '`.ai` is the canonical AI context directory.',
         '`.ai-overlay` is the project-specific AI context directory.',
-        '`.codex`, `.claude`, and `.agents` point to `.ai`.',
         'Project-specific AI assets must live in `.ai-overlay` unless the user explicitly asks to change `.ai`.',
+        'Activated tool pointer paths point to `.ai`',
         'Shared agents must live in `.ai/agents`.',
         'Prompt source files are immutable and versioned under `.ai/prompts/registry`.'
     )
@@ -191,8 +332,20 @@ function Ensure-AgentsFile {
     $text = Get-Content -LiteralPath $Path -Raw
     foreach ($snippet in $required) {
         if (-not $text.Contains($snippet)) {
-            throw "AGENTS.md exists but is missing required assertion: $snippet. Choose a setup decision before continuing: merge canonical assertions into the existing file, replace it with the canonical seed, or restructure existing project documentation and source layout first."
+            throw "AGENTS.md exists but is missing required assertion: $snippet. Choose a setup decision before continuing: merge canonical assertions into the existing file, replace it with the canonical generated file, or restructure existing project documentation and source layout first."
         }
+    }
+}
+
+function Copy-ToolEntrypoints {
+    param([object[]]$Profiles)
+
+    foreach ($profile in $Profiles) {
+        if ($profile.rootEntrypoint -eq "AGENTS.md") {
+            continue
+        }
+
+        Write-RenderedIfMissing "agent-entrypoint.md.tpl" (Join-Path $root $profile.rootEntrypoint) (Get-EntrypointValues $profile)
     }
 }
 
@@ -204,13 +357,14 @@ function Ensure-AiReadme {
         return
     }
 
-    @'
+    $content = @'
 # AI Context
 
 This directory is the canonical AI context for the project.
 
-Shared rules, skills, commands, agents, templates, prompts, and MCP assets live here. Root `.codex`, `.claude`, and `.agents` links point to this directory.
-'@ | Set-Content -LiteralPath $readmePath -Encoding UTF8
+Shared rules, skills, commands, agents, templates, prompts, and MCP assets live here. Activated root tool pointers point to this directory.
+'@
+    Write-Utf8NoBom $readmePath $content
 }
 
 function Ensure-AiSubmodule {
@@ -224,10 +378,9 @@ function Ensure-AiSubmodule {
         if ([string]::IsNullOrWhiteSpace($AiRepositoryUrl)) {
             throw ".ai must exist before setup. Clone, download, or provide -AiRepositoryUrl."
         }
-        else {
-            Run-Git @("submodule", "add", $AiRepositoryUrl, ".ai")
-            return $true
-        }
+
+        Run-Git @("submodule", "add", $AiRepositoryUrl, ".ai")
+        return $true
     }
 
     if (-not (Test-Path -LiteralPath (Join-Path $aiPath ".git"))) {
@@ -268,96 +421,84 @@ function Ensure-AiSubmodule {
     return $true
 }
 
+$ActiveProfiles = Resolve-ActiveProfiles $AiTool
 $root = (Resolve-Path -LiteralPath $ProjectRoot).Path
 $originalLocation = (Get-Location).Path
 Set-Location -LiteralPath $root
 
 try {
-Write-Step "Configuring $root"
+    Write-Step "Configuring $root"
+    Write-Step "Activated AI tools: $(($ActiveProfiles | ForEach-Object { $_.id }) -join ', ')"
 
-if (-not (Test-GitOk @("rev-parse", "--is-inside-work-tree"))) {
-    Write-Step "Initializing root Git repository"
-    Initialize-GitRepository
-}
-
-$aiRoot = Join-Path $root ".ai"
-if (-not (Test-Path -LiteralPath $aiRoot)) {
-    if ([string]::IsNullOrWhiteSpace($AiRepositoryUrl)) {
-        throw ".ai must exist before setup. Clone, download, or provide -AiRepositoryUrl."
+    if (-not (Test-GitOk @("rev-parse", "--is-inside-work-tree"))) {
+        Write-Step "Initializing root Git repository"
+        Initialize-GitRepository
     }
 
-    Run-Git @("submodule", "add", $AiRepositoryUrl, ".ai")
-}
-
-$aiDirs = @(
-    "agents",
-    "claude/overrides",
-    "codex/overrides",
-    "commands",
-    "mcp",
-    "prompts/registry",
-    "rules",
-    "skills",
-    "templates"
-)
-foreach ($dir in $aiDirs) {
-    Ensure-Directory (Join-Path $aiRoot $dir)
-}
-
-$rootDirs = @(
-    "docs/adr",
-    "docs/architecture",
-    "docs/business",
-    "docs/decisions",
-    "docs/engineering",
-    "docs/product",
-    "docs/references",
-    "docs/requirements",
-    "docs/specs",
-    "sources"
-)
-foreach ($dir in $rootDirs) {
-    Ensure-Directory (Join-Path $root $dir)
-}
-
-$aiOverlayRoot = Join-Path $root ".ai-overlay"
-Ensure-Directory $aiOverlayRoot
-Copy-SeedIfMissing "AI_OVERLAY_README.md" (Join-Path $aiOverlayRoot "README.md")
-
-$gitIgnorePath = Join-Path $root ".gitignore"
-Ensure-AgentsFile (Join-Path $root "AGENTS.md")
-Copy-SeedIfMissing "CLAUDE.md" (Join-Path $root "CLAUDE.md")
-Copy-SeedIfMissing ".gitignore" $gitIgnorePath
-Ensure-Line $gitIgnorePath ".codex/"
-Ensure-Line $gitIgnorePath ".claude/"
-Ensure-Line $gitIgnorePath ".agents/"
-
-New-DirectoryLink (Join-Path $root ".codex") $aiRoot
-New-DirectoryLink (Join-Path $root ".claude") $aiRoot
-New-DirectoryLink (Join-Path $root ".agents") $aiRoot
-
-$aiRegisteredAsSubmodule = Ensure-AiSubmodule $root
-
-if (-not $SkipInitialCommit) {
-    $hasHead = Test-GitOk @("rev-parse", "--verify", "HEAD")
-    if (-not $hasHead) {
-        Write-Step "Creating root initial commit"
-        Run-Git @("add", "AGENTS.md", "CLAUDE.md", ".gitignore", ".ai-overlay", "docs", "sources")
-        if (Test-Path -LiteralPath ".gitmodules") {
-            Run-Git @("add", ".gitmodules")
+    $aiRoot = Join-Path $root ".ai"
+    if (-not (Test-Path -LiteralPath $aiRoot)) {
+        if ([string]::IsNullOrWhiteSpace($AiRepositoryUrl)) {
+            throw ".ai must exist before setup. Clone, download, or provide -AiRepositoryUrl."
         }
-        if ($aiRegisteredAsSubmodule) {
-            Run-Git @("add", ".ai")
-        }
-        Run-Git @("commit", "-m", $InitialCommitMessage)
-    }
-    else {
-        Write-Step "Root repository already has commits; leaving commit creation to the user"
-    }
-}
 
-Write-Step "Done"
-Run-Git @("status", "--short")
+        Run-Git @("submodule", "add", $AiRepositoryUrl, ".ai")
+    }
+
+    foreach ($dir in Get-CanonicalAiDirectories) {
+        Ensure-Directory (Join-Path $aiRoot $dir)
+    }
+
+    foreach ($dir in @(
+        "docs/adr",
+        "docs/architecture",
+        "docs/business",
+        "docs/decisions",
+        "docs/engineering",
+        "docs/product",
+        "docs/references",
+        "docs/requirements",
+        "docs/specs",
+        "sources"
+    )) {
+        Ensure-Directory (Join-Path $root $dir)
+    }
+
+    $aiOverlayRoot = Join-Path $root ".ai-overlay"
+    Ensure-Directory $aiOverlayRoot
+    Copy-SeedIfMissing "AI_OVERLAY_README.md" (Join-Path $aiOverlayRoot "README.md")
+
+    $gitIgnorePath = Join-Path $root ".gitignore"
+    Ensure-AgentsFile (Join-Path $root "AGENTS.md") $ActiveProfiles
+    Copy-ToolEntrypoints $ActiveProfiles
+    Copy-SeedIfMissing ".gitignore" $gitIgnorePath
+
+    foreach ($pointer in Get-ActivePointerNames $ActiveProfiles) {
+        Ensure-Line $gitIgnorePath "$pointer/"
+        New-DirectoryLink (Join-Path $root $pointer) $aiRoot
+    }
+
+    $aiRegisteredAsSubmodule = Ensure-AiSubmodule $root
+
+    if (-not $SkipInitialCommit) {
+        $hasHead = Test-GitOk @("rev-parse", "--verify", "HEAD")
+        if (-not $hasHead) {
+            Write-Step "Creating root initial commit"
+            Run-Git @(@("add") + (Get-InitialCommitPaths $ActiveProfiles))
+            if (Test-Path -LiteralPath ".gitmodules") {
+                Run-Git @("add", ".gitmodules")
+            }
+            if ($aiRegisteredAsSubmodule) {
+                Run-Git @("add", ".ai")
+            }
+            Run-Git @("commit", "-m", $InitialCommitMessage)
+        }
+        else {
+            Write-Step "Root repository already has commits; leaving commit creation to the user"
+        }
+    }
+
+    Write-Step "Done"
+    Run-Git @("status", "--short")
 }
 finally {
     Set-Location -LiteralPath $originalLocation

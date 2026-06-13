@@ -1,6 +1,6 @@
 ---
 name: setup-ai-environment
-description: Configure, initialize, review, and repair the project AI environment according to this repository's canonical AI conventions. Use when Codex needs root AI setup: canonical .ai context, project-specific .ai-overlay, .codex/.claude/.agents links, docs and sources folders, AGENTS.md and .gitignore assertions, Git initialization, .ai reference registration or ignore configuration, and the root initial commit.
+description: Configure, initialize, review, and repair the project AI environment according to this repository's canonical AI conventions. Use when Codex needs root AI setup: canonical .ai context, project-specific .ai-overlay, AI tool profile activation, generated root entrypoints, activated tool links, docs and sources folders, AGENTS.md and .gitignore assertions, Git initialization, .ai reference registration or ignore configuration, and the root initial commit.
 ---
 
 # Setup AI Environment
@@ -13,12 +13,12 @@ When configuring or repairing the AI environment:
 
 1. Inspect the root before changing anything.
 2. Check `AGENTS.md`, `.gitignore`, `.gitmodules`, `.ai/`, `.ai-overlay/`, `docs/`, `sources/`, and Git status.
-3. Treat `.ai` as canonical. Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
+3. Treat `.ai` as canonical. Do not create independent tool-specific pointer trees such as `.codex`, `.claude`, or `.agents`.
 4. For new projects, ensure the `.ai` context has already been cloned or downloaded into the project root before root initialization.
 5. Use `scripts/setup-ai-environment.mjs` when Node.js is available; it is the cross-platform setup path for Windows, Linux, and macOS.
 6. On Windows, `scripts/setup-ai-environment.ps1` remains a supported PowerShell equivalent.
 7. If neither script can be used, follow the script behavior manually and keep the same safety checks.
-8. Use `assets/seeds/AGENTS.md`, `assets/seeds/CLAUDE.md`, `assets/seeds/.gitignore`, and `assets/seeds/AI_OVERLAY_README.md` as the source templates for new projects.
+8. Use `assets/templates/`, `assets/tool-profiles/`, and `assets/seeds/` as the source material for new projects.
 9. When root files already exist, compare them against the required assertions before changing anything.
 10. If an existing `AGENTS.md`, `.gitignore`, README, documentation structure, or source layout conflicts with the canonical structure, stop and ask for one of these decisions:
    - Merge: preserve project-specific content and add missing canonical context.
@@ -35,6 +35,8 @@ Every setup decision must respect:
 - **Canonical AI Context**: `.ai` is the source of truth for shared AI assets.
 - **AI Overlay**: `.ai-overlay` is the versioned project-specific AI context overlay. It mirrors `.ai` conceptually but starts with only `README.md` and grows on demand.
 - **Tool Links, Not Copies**: `.codex`, `.claude`, and `.agents` must point to `.ai`.
+- **Tool Profile Activation**: `.ai` may contain canonical support for many AI tools, but a generated root activates only the requested tool surfaces.
+- **Canonical Entrypoint**: `AGENTS.md` remains the shared root operating guide. Tool-specific root files such as `CLAUDE.md` are discovery bridges.
 - **Root Workspace Ownership**: the root owns AI governance, global documentation, source-module references, and root Git coordination.
 - **Source Isolation**: source code belongs under `sources/`, not directly in the root.
 - **Documentation Separation**: global documentation belongs under `docs/`.
@@ -58,6 +60,22 @@ Then ask an AI agent to execute this prompt from the project root:
 
 ```text
 initialize project using .ai/skills/setup-ai-environment/SKILL.md skill
+```
+
+The setup script defaults to `--ai-tool both` for compatibility. Use a narrower activation when the root should expose only one AI surface:
+
+```bash
+node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs --ai-tool codex
+node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs --ai-tool claude
+node .ai/skills/setup-ai-environment/scripts/setup-ai-environment.mjs --ai-tool both
+```
+
+Windows PowerShell equivalents:
+
+```powershell
+.\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1 -AiTool "codex"
+.\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1 -AiTool "claude"
+.\.ai\skills\setup-ai-environment\scripts\setup-ai-environment.ps1 -AiTool "both"
 ```
 
 The default Git branch for newly initialized repositories is `main`. Override it only when a project has a documented reason:
@@ -89,8 +107,9 @@ Windows PowerShell equivalent:
 This skill owns:
 
 - Root Git initialization when missing.
-- Root directory and seed file creation.
-- Root tool links.
+- Root directory and generated file creation.
+- Root tool profile activation.
+- Activated root tool links.
 - Project-specific AI overlay initialization.
 - `.ai` reference registration or ignore configuration.
 - Root initial commit when the root repository has no commits.
@@ -100,7 +119,7 @@ The skill handles the rest of the project initialization:
 - Initializes the root Git repository when missing.
 - Creates the expected root directories and seed files.
 - Creates `.ai-overlay/README.md` only, leaving the rest of the overlay structure to be created on demand.
-- Creates `.codex`, `.claude`, and `.agents` links to `.ai`.
+- Creates `.agents` and the activated tool links to `.ai`.
 - Registers `.ai` as a submodule/gitlink only when `.ai` has a remote repository URL.
 - Ignores local-only `.ai` contexts in the root repository when `.ai` is copied manually or has no remote.
 - Creates the initial root commit when the root repository has no commits.
@@ -155,26 +174,51 @@ Ensure `.ai` contains the shared AI structure:
   templates/
 ```
 
-Ensure root links are mapped as:
+Tool profiles live in:
 
-- `.codex` -> `.ai`
-- `.claude` -> `.ai`
-- `.agents` -> `.ai`
+```text
+.ai/skills/setup-ai-environment/assets/tool-profiles/
+  codex.json
+  claude.json
+```
+
+Root activation modes map links as:
+
+```text
+codex:
+  .agents -> .ai
+  .codex  -> .ai
+
+claude:
+  .agents -> .ai
+  .claude -> .ai
+
+both:
+  .agents -> .ai
+  .codex  -> .ai
+  .claude -> .ai
+```
 
 On Windows, try symbolic links first. If privileges block symbolic links, use directory junctions and document the fallback in `AGENTS.md`.
 
 ## Root File Assertions
 
+Generated root files use templates and tool profiles:
+
+```text
+assets/templates/root-agents.md.tpl
+assets/templates/agent-entrypoint.md.tpl
+assets/tool-profiles/*.json
+```
+
 Seed files live in:
 
 ```text
-assets/seeds/AGENTS.md
-assets/seeds/CLAUDE.md
 assets/seeds/.gitignore
 assets/seeds/AI_OVERLAY_README.md
 ```
 
-When setting up a new project, recreate missing root files from those seeds before applying assertions. When a structural rule changes and impacts future projects, update the relevant seed in this skill.
+When setting up a new project, generate missing root files from templates and copy remaining seed files before applying assertions. When a structural rule changes and impacts future projects, update the relevant template, profile, or seed in this skill.
 
 When a root file already exists, do not silently overwrite it. If it is missing required canonical assertions, request a decision:
 
@@ -187,14 +231,14 @@ When a root file already exists, do not silently overwrite it. If it is missing 
 - SDD/planning tools are optional and must be configured only when explicitly requested.
 - `.ai` is canonical.
 - `.ai-overlay` is the project-specific AI context overlay and is versioned with the root repository.
-- `.codex`, `.claude`, and `.agents` point to `.ai`.
+- Activated tool pointer paths point to `.ai`.
 - Shared rules, skills, commands, agents, templates, and MCP assets live under `.ai`.
 - Project-specific rules, skills, commands, agents, templates, and MCP assets live under `.ai-overlay` unless the user explicitly asks to change `.ai`.
 - Prompt registry files are immutable and incrementally numbered.
 
-A root `CLAUDE.md` bridge must exist so Claude Code, which reads `CLAUDE.md` natively but not `AGENTS.md`, discovers `AGENTS.md` and the `.ai` context. Keep it short; it must not duplicate canonical content. See `.ai/claude/overrides/claude-code.md`.
+Tool-specific root entrypoint files must be generated only when their tool profile requires them. For example, Claude Code receives a root `CLAUDE.md` bridge because it reads `CLAUDE.md` natively but not `AGENTS.md`. Codex uses `AGENTS.md` directly and does not require a separate root `CODEX.md`.
 
-`.gitignore` must include the root link paths so Git does not traverse them:
+`.gitignore` must include the activated root link paths so Git does not traverse them. For `both`, this means:
 
 ```text
 .codex/
@@ -254,14 +298,13 @@ Before finishing, verify:
 
 - [ ] `.ai` exists at the repository root.
 - [ ] `.ai-overlay/README.md` exists and is versioned by the root repository.
-- [ ] `.codex` points to `.ai`.
-- [ ] `.claude` points to `.ai`.
 - [ ] `.agents` points to `.ai`.
+- [ ] Activated tool pointer paths point to `.ai`.
 - [ ] `docs/` exists at the repository root.
 - [ ] `sources/` exists at the repository root.
 - [ ] `AGENTS.md` exists and includes the required canonical assertions.
-- [ ] `CLAUDE.md` bridge exists at the repository root for Claude Code discovery.
-- [ ] `.gitignore` includes `.codex/`, `.claude/`, and `.agents/`.
+- [ ] Tool-specific root entrypoint bridges exist only when required by activated profiles.
+- [ ] `.gitignore` includes activated pointer paths.
 - [ ] `.ai` reference handling follows `.ai/rules/repository-submodule-references.md`.
 - [ ] Root Git initialization and initial commit behavior followed the standard flow.
 - [ ] Existing project files were merged, replaced, or restructured only after the user chose that path.
