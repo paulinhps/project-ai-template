@@ -73,6 +73,7 @@ copySeedIfMissing("AI_OVERLAY_README.md", join(overlayRoot, "README.md"));
 
 const gitignorePath = join(projectRoot, ".gitignore");
 ensureAgentsFile(join(projectRoot, "AGENTS.md"));
+copySeedIfMissing("CLAUDE.md", join(projectRoot, "CLAUDE.md"));
 copySeedIfMissing(".gitignore", gitignorePath);
 ensureLine(gitignorePath, ".codex/");
 ensureLine(gitignorePath, ".claude/");
@@ -88,7 +89,7 @@ if (!skipInitialCommit) {
   const hasHead = gitOk(["rev-parse", "--verify", "HEAD"]);
   if (!hasHead) {
     step("Creating root initial commit");
-    runGit(["add", "AGENTS.md", ".gitignore", ".ai-overlay", "docs", "sources"]);
+    runGit(["add", "AGENTS.md", "CLAUDE.md", ".gitignore", ".ai-overlay", "docs", "sources"]);
     if (existsSync(".gitmodules")) runGit(["add", ".gitmodules"]);
     if (aiRegisteredAsSubmodule) runGit(["add", ".ai"]);
     runGit(["commit", "-m", initialCommitMessage]);

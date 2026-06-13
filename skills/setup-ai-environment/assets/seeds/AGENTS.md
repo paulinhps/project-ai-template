@@ -12,6 +12,8 @@ Project-specific AI assets must live in `.ai-overlay` unless the user explicitly
 
 Agents should load `.ai` first, then `.ai-overlay` as the project-specific overlay.
 
+Claude Code reads the root `CLAUDE.md` automatically as its discovery entry point; it does not read this `AGENTS.md` natively. `CLAUDE.md` is a short bridge that points back to this guide and to `.ai`. Keep shared documentation in `AGENTS.md` and `.ai`, not in `CLAUDE.md`. Claude-specific behavior is documented in `.ai/claude/overrides/claude-code.md`.
+
 `.codex`, `.claude`, and `.agents` point to `.ai`. The requested symbolic links required administrator privileges in this Windows environment, so directory junctions were used as the non-duplicating fallback. Changes made through `.ai`, `.codex`, `.claude`, or `.agents` affect the same underlying files.
 
 Do not create independent `.codex`, `.claude`, or `.agents` directory trees.
@@ -61,7 +63,7 @@ The root repository tracks reproducible references, not copied implementation tr
 
 ## Optional SDD Tooling
 
-Configure SDD/planning tools only when the user explicitly requests a specific tool.
+Configure SDD/planning tools only when the user explicitly requests a specific tool. An OpenSpec `propose -> apply -> archive` flow is one such optional tool; it is not wired by default.
 
 Tool-specific rules, skills, commands, agents, templates, MCP assets, prompts, and overrides created for an optional SDD workflow must be registered under `.ai-overlay`, not under canonical `.ai`, unless the user explicitly asks to evolve the shared canonical context.
 

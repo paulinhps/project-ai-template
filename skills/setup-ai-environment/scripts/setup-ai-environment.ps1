@@ -326,6 +326,7 @@ Copy-SeedIfMissing "AI_OVERLAY_README.md" (Join-Path $aiOverlayRoot "README.md")
 
 $gitIgnorePath = Join-Path $root ".gitignore"
 Ensure-AgentsFile (Join-Path $root "AGENTS.md")
+Copy-SeedIfMissing "CLAUDE.md" (Join-Path $root "CLAUDE.md")
 Copy-SeedIfMissing ".gitignore" $gitIgnorePath
 Ensure-Line $gitIgnorePath ".codex/"
 Ensure-Line $gitIgnorePath ".claude/"
@@ -341,7 +342,7 @@ if (-not $SkipInitialCommit) {
     $hasHead = Test-GitOk @("rev-parse", "--verify", "HEAD")
     if (-not $hasHead) {
         Write-Step "Creating root initial commit"
-        Run-Git @("add", "AGENTS.md", ".gitignore", ".ai-overlay", "docs", "sources")
+        Run-Git @("add", "AGENTS.md", "CLAUDE.md", ".gitignore", ".ai-overlay", "docs", "sources")
         if (Test-Path -LiteralPath ".gitmodules") {
             Run-Git @("add", ".gitmodules")
         }
